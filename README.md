@@ -80,3 +80,15 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
+
+### Development
+
+Make sure to install the development dependencies from `development.txt`.
+
+#### Tests
+
+The build in tests can be executed with the Django test runner.
+
+```python
+django-admin test --settings=eb_sqs.test_settings
+```
