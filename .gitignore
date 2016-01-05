@@ -1,0 +1,12 @@
+# Ignore all compiled python files.
+*.pyc
+
+# all intellij stuff
+.idea
+
+# Ignore OSX cache files
+.DS_Store
+
+# Ignore EGG files
+*.egg-info
+*.egg
