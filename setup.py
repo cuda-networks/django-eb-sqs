@@ -9,7 +9,8 @@ setup(
     version='0.1',
     packages=['eb_sqs'],
     description='A SQS worker implementation for Elastic Beanstalk',
-    # long_description=README,
+    long_description=README,
+    url='https://github.com/sookasa/django-eb-sqs',
     install_requires=[
         'Django>=1.7',
         'boto3>=1.2.3',
