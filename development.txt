@@ -1,3 +1,4 @@
 boto3==1.2.3
-Django=1.9.1
+Django==1.9.1
 moto==0.4.19
+requests==2.9.0

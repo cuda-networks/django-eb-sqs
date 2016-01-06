@@ -49,7 +49,7 @@ echo.delay(message='Hello World!', execute_inline=True)
 
 #### Executing Tasks
 
-The Elastic Beanstalk Worker Tier sends all tasks to the specified API endpoint. django-eb-sqs has already such an endpoint which can be used by specifing the url mapping in your `urls.py` file.
+The Elastic Beanstalk Worker Tier sends all tasks to a API endpoint. django-eb-sqs has already such an endpoint which can be used by specifing the url mapping in your `urls.py` file.
 
 ```python
 urlpatterns = [
@@ -58,18 +58,22 @@ urlpatterns = [
 ]
 ```
 
-In that case the endpoint url would be: `worker/process`
+In that case the relative endpoint url would be: `worker/process`
 
 Set this url in the Elastic Beanstalk Worker settings prior to deployment.
 
-You can also execute the worker manually by calling:
+During development you can use the included Django command to execute a small script which retrieves messages from SQS and posts them to this endpoint.
 
 ```python
-message = ... # Serialized WorkerTask
-
-worker = Worker()
-worker.execute(message)
+python manage.py run_eb_sqs_worker --url <absoulte endpoint url> --queue <queue-name>
 ```
+
+For example:
+
+```python
+python manage.py run_eb_sqs_worker --url http://127.0.0.1:80/worker/process --queue default
+```
+
 
 #### Settings
 
