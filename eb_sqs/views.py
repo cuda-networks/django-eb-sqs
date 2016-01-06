@@ -1,4 +1,4 @@
-from django.http import JsonResponse, HttpResponseServerError
+from django.http import HttpResponseServerError, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from eb_sqs.worker import Worker
@@ -11,8 +11,8 @@ def process_task(request):
 
     try:
         worker.execute(request.body)
-        return JsonResponse(data={})
+        return HttpResponse(status=200)
     except Worker.InvalidMessageFormat:
-        return JsonResponse(data={})
+        return HttpResponse(status=200)
     except Worker.ExecutionFailedException:
         return HttpResponseServerError()
