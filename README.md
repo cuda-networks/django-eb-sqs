@@ -80,7 +80,7 @@ python manage.py run_eb_sqs_worker --url http://127.0.0.1:80/worker/process --qu
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
 
 - EB_SQS_AUTO_ADD_QUEUE (`True`): If queues should be added automatically to AWS if they don't exist.
-- EB_SQS_QUEUE_PREFIX (`eb-sqs`): Prefix to use for the queues. The prefix is added to the queue name.
+- EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
