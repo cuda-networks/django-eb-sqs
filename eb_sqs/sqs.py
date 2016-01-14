@@ -25,13 +25,16 @@ class SqsClient:
     def _get_queue(self, queue_name):
         queue_name = '{}{}'.format(QUEUE_PREFIX, queue_name)
 
-        queue = self.queue_cache.get(queue_name, self._get_sqs_queue(queue_name))
+        queue = self._get_sqs_queue(queue_name)
         if not queue:
             queue = self._add_sqs_queue(queue_name)
 
         return queue
 
     def _get_sqs_queue(self, queue_name):
+        if self.queue_cache.get(queue_name):
+            return self.queue_cache[queue_name]
+
         try:
             queue = self.sqs.get_queue_by_name(QueueName=queue_name)
             self.queue_cache[queue_name] = queue
