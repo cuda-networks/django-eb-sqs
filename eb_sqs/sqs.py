@@ -27,23 +27,29 @@ class SqsClient:
 
         queue = self.queue_cache.get(queue_name, self._get_sqs_queue(queue_name))
         if not queue:
-            if AUTO_ADD_QUEUE:
-                queue = self.sqs.create_queue(QueueName=queue_name)
-                self.queue_cache[queue_name] = queue
-            else:
-                raise SqsClient.QueueDoesNotExistException(queue_name)
+            queue = self._add_sqs_queue(queue_name)
 
         return queue
 
     def _get_sqs_queue(self, queue_name):
         try:
-            return self.sqs.get_queue_by_name(QueueName=queue_name)
+            queue = self.sqs.get_queue_by_name(QueueName=queue_name)
+            self.queue_cache[queue_name] = queue
+            return queue
         except ClientError as ex:
             error_code = ex.response.get('Error', {}).get('Code', None)
             if error_code == 'AWS.SimpleQueueService.NonExistentQueue':
                 return None
             else:
                 raise ex
+
+    def _add_sqs_queue(self, queue_name):
+        if AUTO_ADD_QUEUE:
+            queue = self.sqs.create_queue(QueueName=queue_name)
+            self.queue_cache[queue_name] = queue
+            return queue
+        else:
+            raise SqsClient.QueueDoesNotExistException(queue_name)
 
     def add_message(self, queue_name, msg, delay):
         queue = self._get_queue(queue_name)
