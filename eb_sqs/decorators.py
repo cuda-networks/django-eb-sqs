@@ -44,7 +44,7 @@ def func_retry_decorator(worker_task):
         if execute_inline:
             return worker_task.execute()
         else:
-            logger.info('Retrying task %s: %s, %s (%s)', worker_task.abs_func_name, worker_task.args, worker_task.kwargs, worker_task.queue)
+            logger.info('Retrying task %s: %s, %s (%s, retry: %s)', worker_task.abs_func_name, worker_task.args, worker_task.kwargs, worker_task.queue, worker_task.retry)
             sqs.add_message(worker_task.queue, worker_task.serialize(), delay)
 
     return wrapper

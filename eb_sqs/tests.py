@@ -17,8 +17,13 @@ def dummy_task(msg):
 
 
 @task(max_retries=5)
+def dummy_retry_inline_task(msg):
+    dummy_retry_inline_task.retry(execute_inline=True)
+
+
+@task(max_retries=5)
 def dummy_retry_task(msg):
-    dummy_retry_task.retry(execute_inline=True)
+    dummy_retry_task.retry()
 
 
 @task()
@@ -66,7 +71,7 @@ class TaskExecutionTest(TestCase):
 
     def test_inline_retry_execution(self):
         with self.assertRaises(MaxRetriesReachedException):
-            dummy_retry_task.delay('Hello World!', execute_inline=True)
+            dummy_retry_inline_task.delay('Hello World!', execute_inline=True)
 
     @mock_sqs()
     def test_delay_0_execution(self):
@@ -90,6 +95,25 @@ class TaskExecutionTest(TestCase):
         self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '0')
 
         time.sleep(delay+0.1)
+
+        queue.reload()
+        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '1')
+
+    @mock_sqs()
+    def test_retry_execution(self):
+        sqs = boto3.resource('sqs')
+        queue = sqs.create_queue(QueueName='eb-sqs-default')
+
+        dummy_retry_task.delay('Hello World!')
+
+        messages = queue.receive_messages()
+        self.assertEqual(len(messages), 1)
+        queue.reload()
+        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '0')
+
+        worker = Worker()
+        # Will retry and put another task into the queue
+        worker.execute(messages[0].body)
 
         queue.reload()
         self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '1')
