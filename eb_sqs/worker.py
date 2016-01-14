@@ -6,22 +6,30 @@ logger = logging.getLogger("eb_sqs")
 
 
 class WorkerTask:
-    def __init__(self, func, args, kwargs):
+    def __init__(self, queue, func, args, kwargs, max_retries, retry):
+        self.queue = queue
         self.func = func
         self.args = args
         self.kwargs = kwargs
+        self.max_retries = max_retries
+        self.retry = retry
 
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
 
     def execute(self):
+        from eb_sqs.decorators import func_retry_decorator
+        self.func.retry = func_retry_decorator(worker_task=self)
         return self.func(*self.args, **self.kwargs)
 
     def serialize(self):
 
         task = {
+                'queue': self.queue,
                 'func': self.abs_func_name,
                 'args': self.args,
                 'kwargs': self.kwargs,
+                'max_retries': self.max_retries,
+                'retry': self.retry,
             }
 
         return json.dumps(task)
@@ -37,10 +45,13 @@ class WorkerTask:
 
         func = getattr(func_module, func_name)
 
+        queue = task['queue']
         args = task.get('args', [])
         kwargs = task.get('kwargs', {})
+        max_retries = task['max_retries']
+        retry = task['retry']
 
-        return WorkerTask(func, args, kwargs)
+        return WorkerTask(queue, func, args, kwargs, max_retries, retry)
 
 
 class Worker:

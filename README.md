@@ -47,6 +47,23 @@ echo.delay(message='Hello World!', execute_inline=True)
 
 **NOTE:** `delay` is not applied when `execute_inline` is set to `True`.
 
+Failed tasks can be retried by using the `retry` method. See the following example:
+
+```python
+from eb_sqs.decorators import task
+
+@task(queue='test', max_retries=5)
+def upload_file(message):
+    try:
+        # upload ...
+    expect ConnectionException:
+        upload_file.retry()
+```
+
+The retry call supports the `delay` and `execute_inline` arguments in order to delay the retry or execute it inline.
+
+**NOTE:** `retry()` throws a `MaxRetriesReachedException` exception if the maximum number of retries is reached.
+
 #### Executing Tasks
 
 The Elastic Beanstalk Worker Tier sends all tasks to a API endpoint. django-eb-sqs has already such an endpoint which can be used by specifing the url mapping in your `urls.py` file.
@@ -84,6 +101,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
+- EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
 
 ### Development
 

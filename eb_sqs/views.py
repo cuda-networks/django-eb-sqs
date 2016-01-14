@@ -13,6 +13,6 @@ def process_task(request):
         worker.execute(request.body)
         return HttpResponse(status=200)
     except Worker.InvalidMessageFormat:
-        return HttpResponse(status=200)
+        return HttpResponse(status=400)
     except Worker.ExecutionFailedException:
         return HttpResponseServerError()
