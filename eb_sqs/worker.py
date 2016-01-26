@@ -18,6 +18,7 @@ class WorkerTask:
 
     def execute(self):
         from eb_sqs.decorators import func_retry_decorator
+        self.func.retry_num = self.retry
         self.func.retry = func_retry_decorator(worker_task=self)
         return self.func(*self.args, **self.kwargs)
 

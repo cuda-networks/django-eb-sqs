@@ -57,5 +57,6 @@ class task(object):
 
     def __call__(self, *args, **kwargs):
         func = args[0]
+        func.retry_num = 0
         func.delay = func_delay_decorator(func, self.queue_name, self.max_retries)
         return func

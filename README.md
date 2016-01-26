@@ -54,13 +54,14 @@ from eb_sqs.decorators import task
 
 @task(queue='test', max_retries=5)
 def upload_file(message):
+    print '# of retries: {}'.format(upload_file.retry_num)
     try:
         # upload ...
     expect ConnectionException:
         upload_file.retry()
 ```
 
-The retry call supports the `delay` and `execute_inline` arguments in order to delay the retry or execute it inline.
+The retry call supports the `delay` and `execute_inline` arguments in order to delay the retry or execute it inline. Use 'retry_num' to get the number of retries for the current task.
 
 **NOTE:** `retry()` throws a `MaxRetriesReachedException` exception if the maximum number of retries is reached.
 
