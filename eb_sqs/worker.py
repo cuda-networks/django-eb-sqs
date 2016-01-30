@@ -1,6 +1,11 @@
+import base64
 import importlib
 import json
 import logging
+try:
+   import cPickle as pickle
+except:
+   import pickle
 
 logger = logging.getLogger("eb_sqs")
 
@@ -22,18 +27,25 @@ class WorkerTask:
         self.func.retry = func_retry_decorator(worker_task=self)
         return self.func(*self.args, **self.kwargs)
 
-    def serialize(self):
+    def serialize(self, use_pickle=False):
+        args = WorkerTask._pickle_args(self.args) if use_pickle else self.args
+        kwargs = WorkerTask._pickle_args(self.kwargs) if use_pickle else self.kwargs
 
         task = {
                 'queue': self.queue,
                 'func': self.abs_func_name,
-                'args': self.args,
-                'kwargs': self.kwargs,
+                'args': args,
+                'kwargs': kwargs,
                 'max_retries': self.max_retries,
                 'retry': self.retry,
+                'pickle': use_pickle,
             }
 
         return json.dumps(task)
+
+    @staticmethod
+    def _pickle_args(args):
+        return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL))
 
     @staticmethod
     def deserialize(msg):
@@ -46,13 +58,18 @@ class WorkerTask:
 
         func = getattr(func_module, func_name)
 
+        use_pickle = task.get('pickle', False)
         queue = task['queue']
-        args = task.get('args', [])
-        kwargs = task.get('kwargs', {})
+        args = WorkerTask._unpickle_args(task['args']) if use_pickle else task['args']
+        kwargs = WorkerTask._unpickle_args(task['kwargs']) if use_pickle else task['kwargs']
         max_retries = task['max_retries']
         retry = task['retry']
 
         return WorkerTask(queue, func, args, kwargs, max_retries, retry)
+
+    @staticmethod
+    def _unpickle_args(args):
+        return pickle.loads(base64.b64decode(args))
 
 
 class Worker:

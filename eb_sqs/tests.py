@@ -7,6 +7,12 @@ from eb_sqs.decorators import task, MaxRetriesReachedException
 from eb_sqs.worker import WorkerTask, Worker
 
 
+class TestObject(object):
+    def __init__(self):
+        super(TestObject, self).__init__()
+        self.message = 'Test'
+
+
 def dummy_function():
     pass
 
@@ -34,7 +40,7 @@ def dummy_task_with_exception():
 
 class SerializationTest(TestCase):
     def setUp(self):
-        self.dummy_msg = '{"retry": 0, "args": [], "queue": "default", "max_retries": 5, "func": "eb_sqs.tests.dummy_function", "kwargs": {}}'
+        self.dummy_msg = '{"retry": 0, "args": [], "queue": "default", "max_retries": 5, "func": "eb_sqs.tests.dummy_function", "kwargs": {}, "pickle": false}'
 
     def test_serialize_worker_task(self):
         worker_task = WorkerTask('default', dummy_function, [], {}, 5, 0)
@@ -52,16 +58,13 @@ class SerializationTest(TestCase):
         self.assertEqual(worker_task.max_retries, 5)
         self.assertEqual(worker_task.retry, 0)
 
-    def test_deserialize_worker_task_missing_params(self):
-        dummy_msg = '{"retry": 0, "queue": "default", "max_retries": 3, "func": "eb_sqs.tests.dummy_function"}'
-        worker_task = WorkerTask.deserialize(dummy_msg)
+    def test_serialize_pickle(self):
+        worker_task1 = WorkerTask('default', dummy_function, [], {'object': TestObject()}, 5, 0)
+        msg = worker_task1.serialize(use_pickle=True)
 
-        self.assertEqual(worker_task.queue, 'default')
-        self.assertEqual(worker_task.func, dummy_function)
-        self.assertEqual(worker_task.args, [])
-        self.assertEqual(worker_task.kwargs, {})
-        self.assertEqual(worker_task.max_retries, 3)
-        self.assertEqual(worker_task.retry, 0)
+        worker_task2 = WorkerTask.deserialize(msg)
+        self.assertEqual(worker_task2.args, worker_task1.args)
+        self.assertEqual(worker_task2.kwargs['object'].message, worker_task1.kwargs['object'].message)
 
 
 class TaskExecutionTest(TestCase):
@@ -156,7 +159,7 @@ class ApiTest(TestCase):
 
     def test_process_endpoint_invalid_function(self):
         client = Client()
-        msg = '{"retry": 0, "queue": "default", "max_retries": 5, "func": "eb_sqs.tests.dummy_task_with_exception"}'
+        msg = '{"retry": 0, "queue": "default", "max_retries": 5, "args": [], "func": "eb_sqs.tests.dummy_task_with_exception", "kwargs": {}, "pickle": false}'
 
         response = client.post('/process', content_type='application/json', data=msg)
 

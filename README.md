@@ -33,6 +33,8 @@ echo.delay(message='Hello World!')
 
 If you don't pass a queue name, the `EB_SQS_DEFAULT_QUEUE` setting is used. If not set, the queue name is `default`.
 
+Additionally the task decorator supports `max_retries` (default `0`) and `use_pickle` (default `False`) attributes for advanced control task execution.
+
 You can also delay the execution of a task by specifying the delay time in seconds.
 
 ```python
@@ -101,8 +103,10 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
+- EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
+- EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
 
 ### Development
 
