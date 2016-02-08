@@ -43,7 +43,7 @@ class SerializationTest(TestCase):
         self.dummy_msg = '{"retry": 0, "args": [], "queue": "default", "max_retries": 5, "func": "eb_sqs.tests.dummy_function", "kwargs": {}, "pickle": false}'
 
     def test_serialize_worker_task(self):
-        worker_task = WorkerTask('default', dummy_function, [], {}, 5, 0)
+        worker_task = WorkerTask('default', dummy_function, [], {}, 5, 0, False)
         msg = worker_task.serialize()
 
         self.assertEqual(msg, self.dummy_msg)
@@ -59,8 +59,8 @@ class SerializationTest(TestCase):
         self.assertEqual(worker_task.retry, 0)
 
     def test_serialize_pickle(self):
-        worker_task1 = WorkerTask('default', dummy_function, [], {'object': TestObject()}, 5, 0)
-        msg = worker_task1.serialize(use_pickle=True)
+        worker_task1 = WorkerTask('default', dummy_function, [], {'object': TestObject()}, 5, 0, True)
+        msg = worker_task1.serialize()
 
         worker_task2 = WorkerTask.deserialize(msg)
         self.assertEqual(worker_task2.args, worker_task1.args)

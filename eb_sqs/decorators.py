@@ -18,16 +18,16 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
         execute_inline = kwargs.pop('execute_inline', EXECUTE_INLINE) if kwargs else EXECUTE_INLINE
         delay = kwargs.pop('delay', DEFAULT_DELAY) if kwargs else DEFAULT_DELAY
 
-        worker_task = WorkerTask(queue, func, args, kwargs, max_retries, 0)
+        worker_task = WorkerTask(queue, func, args, kwargs, max_retries, 0, pickle)
 
         if execute_inline:
             if FORCE_SERIALIZATION:
-                WorkerTask.deserialize(worker_task.serialize(use_pickle=pickle)).execute()
+                WorkerTask.deserialize(worker_task.serialize()).execute()
             else:
                 return worker_task.execute()
         else:
             logger.info('Delaying task %s: %s, %s (%s)', worker_task.abs_func_name, args, kwargs, queue)
-            sqs.add_message(queue, worker_task.serialize(use_pickle=pickle), delay)
+            sqs.add_message(queue, worker_task.serialize(), delay)
 
     return wrapper
 

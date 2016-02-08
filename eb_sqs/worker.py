@@ -11,13 +11,14 @@ logger = logging.getLogger("eb_sqs")
 
 
 class WorkerTask:
-    def __init__(self, queue, func, args, kwargs, max_retries, retry):
+    def __init__(self, queue, func, args, kwargs, max_retries, retry, use_pickle):
         self.queue = queue
         self.func = func
         self.args = args
         self.kwargs = kwargs
         self.max_retries = max_retries
         self.retry = retry
+        self.use_pickle = use_pickle
 
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
 
@@ -27,9 +28,9 @@ class WorkerTask:
         self.func.retry = func_retry_decorator(worker_task=self)
         return self.func(*self.args, **self.kwargs)
 
-    def serialize(self, use_pickle=False):
-        args = WorkerTask._pickle_args(self.args) if use_pickle else self.args
-        kwargs = WorkerTask._pickle_args(self.kwargs) if use_pickle else self.kwargs
+    def serialize(self):
+        args = WorkerTask._pickle_args(self.args) if self.use_pickle else self.args
+        kwargs = WorkerTask._pickle_args(self.kwargs) if self.use_pickle else self.kwargs
 
         task = {
                 'queue': self.queue,
@@ -38,7 +39,7 @@ class WorkerTask:
                 'kwargs': kwargs,
                 'max_retries': self.max_retries,
                 'retry': self.retry,
-                'pickle': use_pickle,
+                'pickle': self.use_pickle,
             }
 
         return json.dumps(task)
@@ -65,7 +66,7 @@ class WorkerTask:
         max_retries = task['max_retries']
         retry = task['retry']
 
-        return WorkerTask(queue, func, args, kwargs, max_retries, retry)
+        return WorkerTask(queue, func, args, kwargs, max_retries, retry, use_pickle)
 
     @staticmethod
     def _unpickle_args(args):
