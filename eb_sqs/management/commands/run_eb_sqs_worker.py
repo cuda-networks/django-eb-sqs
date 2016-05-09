@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 import boto3
 from django.core.management import BaseCommand, CommandError
 import requests

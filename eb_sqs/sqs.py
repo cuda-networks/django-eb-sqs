@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 # Don't use pyOpenSSL in urllib3 - it causes an ``OpenSSL.SSL.Error``
 # exception when we try an API call on an idled persistent connection.
 # See https://github.com/boto/boto3/issues/220

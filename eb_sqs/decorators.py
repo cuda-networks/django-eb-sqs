@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 import logging
 
 from eb_sqs.settings import DEFAULT_DELAY, DEFAULT_QUEUE, EXECUTE_INLINE, DEFAULT_MAX_RETRIES, USE_PICKLE, \

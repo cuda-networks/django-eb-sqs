@@ -1,9 +1,11 @@
+from __future__ import absolute_import, unicode_literals
+
+import time
 from unittest import TestCase
 
 import boto3
 from django.test import Client
 from moto import mock_sqs
-import time
 
 from eb_sqs.decorators import task, MaxRetriesReachedException
 from eb_sqs.worker import WorkerTask, Worker
