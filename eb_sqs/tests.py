@@ -1,5 +1,7 @@
+from unittest import TestCase
+
 import boto3
-from django.test import TestCase, Client
+from django.test import Client
 from moto import mock_sqs
 import time
 
