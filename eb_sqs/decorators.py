@@ -12,7 +12,9 @@ sqs = SqsClient()
 
 
 def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
+    # type: (Any, unicode, int, bool) -> (tuple, dict)
     def wrapper(*args, **kwargs):
+        # type: (tuple, dict) -> None
         queue = queue_name if queue_name else DEFAULT_QUEUE
         max_retries = max_retries_count if max_retries_count else DEFAULT_MAX_RETRIES
         pickle = use_pickle if use_pickle else USE_PICKLE
@@ -36,12 +38,15 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
 
 class MaxRetriesReachedException(Exception):
         def __init__(self, retries):
+            # type: (int) -> None
             super(MaxRetriesReachedException, self).__init__()
             self.retries = retries
 
 
 def func_retry_decorator(worker_task):
+    # type: (WorkerTask) -> (tuple, dict)
     def wrapper(*args, **kwargs):
+        # type: (tuple, dict) -> None
         worker_task.retry += 1
         if worker_task.retry > worker_task.max_retries:
             raise MaxRetriesReachedException(worker_task.retry)
@@ -60,11 +65,13 @@ def func_retry_decorator(worker_task):
 
 class task(object):
     def __init__(self, queue_name=None, max_retries=None, use_pickle=None):
+        # type: (unicode, int, bool) -> None
         self.queue_name = queue_name
         self.max_retries = max_retries
         self.use_pickle = use_pickle
 
     def __call__(self, *args, **kwargs):
+        # type: (tuple, dict) -> Any
         func = args[0]
         func.retry_num = 0
         func.delay = func_delay_decorator(func, self.queue_name, self.max_retries, self.use_pickle)

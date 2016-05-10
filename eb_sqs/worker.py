@@ -15,6 +15,7 @@ logger = logging.getLogger("eb_sqs")
 
 class WorkerTask:
     def __init__(self, queue, func, args, kwargs, max_retries, retry, use_pickle):
+        # type: (unicode, Any, tuple, dict, int, int, bool) -> None
         self.queue = queue
         self.func = func
         self.args = args
@@ -26,12 +27,14 @@ class WorkerTask:
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
 
     def execute(self):
+        # type: () -> Any
         from eb_sqs.decorators import func_retry_decorator
         self.func.retry_num = self.retry
         self.func.retry = func_retry_decorator(worker_task=self)
         return self.func(*self.args, **self.kwargs)
 
     def serialize(self):
+        # type: () -> unicode
         args = WorkerTask._pickle_args(self.args) if self.use_pickle else self.args
         kwargs = WorkerTask._pickle_args(self.kwargs) if self.use_pickle else self.kwargs
 
@@ -49,10 +52,12 @@ class WorkerTask:
 
     @staticmethod
     def _pickle_args(args):
+        # type: (dict) -> unicode
         return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL))
 
     @staticmethod
     def deserialize(msg):
+        # type: (unicode) -> WorkerTask
         task = json.loads(msg)
 
         abs_func_name = task['func']
@@ -73,26 +78,31 @@ class WorkerTask:
 
     @staticmethod
     def _unpickle_args(args):
+        # type: (unicode) -> dict
         return pickle.loads(base64.b64decode(args))
 
 
-class Worker:
+class Worker(object):
     class InvalidMessageFormat(Exception):
         def __init__(self, msg, caught):
+            # type: (unicode, Excpetion) -> None
             super(Worker.InvalidMessageFormat, self).__init__()
             self.msg = msg
             self.caught = caught
 
     class ExecutionFailedException(Exception):
         def __init__(self, task_name, caught):
+            # type: (unicode, Exception) -> None
             super(Worker.ExecutionFailedException, self).__init__()
             self.task_name = task_name
             self.caught = caught
 
     def __init__(self):
-        pass
+        # type: () -> None
+        super(Worker, self).__init__()
 
     def execute(self, msg):
+        # type: (unicode) -> Any
         try:
             worker_task = WorkerTask.deserialize(msg)
         except Exception as ex:

@@ -10,6 +10,7 @@ from eb_sqs.worker import Worker
 @require_http_methods(['POST'])
 @csrf_exempt
 def process_task(request):
+    # type: (HttpRequest) -> HttpResponse
     worker = Worker()
 
     try:

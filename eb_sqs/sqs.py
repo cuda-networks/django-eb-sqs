@@ -17,14 +17,17 @@ from eb_sqs.settings import QUEUE_PREFIX, AUTO_ADD_QUEUE
 class SqsClient:
     class QueueDoesNotExistException(Exception):
         def __init__(self, queue_name):
+            # type: (unicode) -> None
             super(SqsClient.QueueDoesNotExistException, self).__init__()
             self.queue_name = queue_name
 
     def __init__(self):
+        # type: () -> None
         self.sqs = boto3.resource('sqs')
         self.queue_cache = {}
 
     def _get_queue(self, queue_name):
+        # type: (unicode) -> Any
         queue_name = '{}{}'.format(QUEUE_PREFIX, queue_name)
 
         queue = self._get_sqs_queue(queue_name)
@@ -34,6 +37,7 @@ class SqsClient:
         return queue
 
     def _get_sqs_queue(self, queue_name):
+        # type: (unicode) -> Any
         if self.queue_cache.get(queue_name):
             return self.queue_cache[queue_name]
 
@@ -49,6 +53,7 @@ class SqsClient:
                 raise ex
 
     def _add_sqs_queue(self, queue_name):
+        # type: (unicode) -> Any
         if AUTO_ADD_QUEUE:
             queue = self.sqs.create_queue(QueueName=queue_name)
             self.queue_cache[queue_name] = queue
@@ -57,6 +62,7 @@ class SqsClient:
             raise SqsClient.QueueDoesNotExistException(queue_name)
 
     def add_message(self, queue_name, msg, delay):
+        # type: (unicode, unicode, int) -> None
         queue = self._get_queue(queue_name)
         queue.send_message(
             MessageBody=msg,

@@ -13,6 +13,7 @@ from eb_sqs.worker import WorkerTask, Worker
 
 class TestObject(object):
     def __init__(self):
+        # type: () -> None
         super(TestObject, self).__init__()
         self.message = 'Test'
 
@@ -28,17 +29,20 @@ def dummy_task(msg):
 
 @task(max_retries=5)
 def dummy_retry_inline_task(msg):
+    # type: (unicode) -> None
     dummy_retry_inline_task.retry(execute_inline=True)
 
 
 @task(max_retries=5)
 def dummy_retry_task(msg):
+    # type: (unicode) -> None
     if dummy_retry_task.retry_num == 0:
         dummy_retry_task.retry()
 
 
 @task()
 def dummy_task_with_exception():
+    # type: () -> None
     raise Exception()
 
 

@@ -14,3 +14,5 @@ DEFAULT_DELAY = getattr(settings, 'EB_SQS_DEFAULT_DELAY', 0)
 DEFAULT_MAX_RETRIES = getattr(settings, 'EB_SQS_DEFAULT_MAX_RETRIES', 0)
 
 USE_PICKLE = getattr(settings, 'EB_SQS_USE_PICKLE', False)
+
+REDIS_CLIENT = getattr(settings, 'REDIS_CLIENT', None)
