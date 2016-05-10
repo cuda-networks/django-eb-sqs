@@ -1,25 +1,23 @@
 from __future__ import absolute_import, unicode_literals
 
-# Don't use pyOpenSSL in urllib3 - it causes an ``OpenSSL.SSL.Error``
-# exception when we try an API call on an idled persistent connection.
-# See https://github.com/boto/boto3/issues/220
-try:
-    from botocore.vendored.requests.packages.urllib3.contrib import pyopenssl
-    pyopenssl.extract_from_urllib3()
-except ImportError:
-    pass
-
 import boto3
 from botocore.exceptions import ClientError
+
 from eb_sqs.settings import QUEUE_PREFIX, AUTO_ADD_QUEUE
+from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException
 
 
-class SqsClient:
-    class QueueDoesNotExistException(Exception):
-        def __init__(self, queue_name):
-            # type: (unicode) -> None
-            super(SqsClient.QueueDoesNotExistException, self).__init__()
-            self.queue_name = queue_name
+class SqsQueueClient(QueueClient):
+    _SQS_INSTANCE = None # type: SqsQueueClient
+    @staticmethod
+    def get_instance():
+        # type: () -> SqsQueueClient
+        """
+        Returns a SQS client instance with active queue cache
+        """
+        if not SqsQueueClient._SQS_INSTANCE:
+            SqsQueueClient._SQS_INSTANCE = SqsQueueClient()
+        return SqsQueueClient._SQS_INSTANCE
 
     def __init__(self):
         # type: () -> None
@@ -59,7 +57,7 @@ class SqsClient:
             self.queue_cache[queue_name] = queue
             return queue
         else:
-            raise SqsClient.QueueDoesNotExistException(queue_name)
+            raise QueueDoesNotExistException(queue_name)
 
     def add_message(self, queue_name, msg, delay):
         # type: (unicode, unicode, int) -> None

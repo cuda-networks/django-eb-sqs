@@ -3,19 +3,17 @@ from __future__ import absolute_import, unicode_literals
 import base64
 import importlib
 import json
-import logging
 
 try:
    import cPickle as pickle
 except:
    import pickle
 
-logger = logging.getLogger("eb_sqs")
 
-
-class WorkerTask:
+class WorkerTask(object):
     def __init__(self, queue, func, args, kwargs, max_retries, retry, use_pickle):
         # type: (unicode, Any, tuple, dict, int, int, bool) -> None
+        super(WorkerTask, self).__init__()
         self.queue = queue
         self.func = func
         self.args = args
@@ -80,56 +78,3 @@ class WorkerTask:
     def _unpickle_args(args):
         # type: (unicode) -> dict
         return pickle.loads(base64.b64decode(args))
-
-
-class Worker(object):
-    class InvalidMessageFormat(Exception):
-        def __init__(self, msg, caught):
-            # type: (unicode, Excpetion) -> None
-            super(Worker.InvalidMessageFormat, self).__init__()
-            self.msg = msg
-            self.caught = caught
-
-    class ExecutionFailedException(Exception):
-        def __init__(self, task_name, caught):
-            # type: (unicode, Exception) -> None
-            super(Worker.ExecutionFailedException, self).__init__()
-            self.task_name = task_name
-            self.caught = caught
-
-    def __init__(self):
-        # type: () -> None
-        super(Worker, self).__init__()
-
-    def execute(self, msg):
-        # type: (unicode) -> Any
-        try:
-            worker_task = WorkerTask.deserialize(msg)
-        except Exception as ex:
-            logger.exception(
-                'Message %s is not a valid worker task: %s',
-                msg,
-                ex
-            )
-
-            raise Worker.InvalidMessageFormat(msg, ex)
-
-        try:
-            logger.info(
-                'Execute task %s with args: %s and kwargs: %s',
-                worker_task.abs_func_name,
-                worker_task.args,
-                worker_task.kwargs
-            )
-
-            return worker_task.execute()
-        except Exception as ex:
-            logger.exception(
-                'Task %s failed to execute with args: %s and kwargs: %s: %s',
-                worker_task.abs_func_name,
-                worker_task.args,
-                worker_task.kwargs,
-                ex
-            )
-
-            raise Worker.ExecutionFailedException(worker_task.abs_func_name, ex)

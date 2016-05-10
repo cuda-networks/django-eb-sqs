@@ -1,20 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
-
-from eb_sqs.settings import DEFAULT_DELAY, DEFAULT_QUEUE, EXECUTE_INLINE, DEFAULT_MAX_RETRIES, USE_PICKLE, \
-    FORCE_SERIALIZATION
-from eb_sqs.sqs import SqsClient
-from eb_sqs.worker import WorkerTask
-
-logger = logging.getLogger("eb_sqs")
-sqs = SqsClient()
+from eb_sqs.aws.sqs_queue_client import SqsQueueClient
+from eb_sqs.settings import DEFAULT_DELAY, DEFAULT_QUEUE, EXECUTE_INLINE, DEFAULT_MAX_RETRIES, USE_PICKLE
+from eb_sqs.worker.worker import Worker
+from eb_sqs.worker.worker_task import WorkerTask
 
 
 def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
     # type: (Any, unicode, int, bool) -> (tuple, dict)
     def wrapper(*args, **kwargs):
-        # type: (tuple, dict) -> None
+        # type: (tuple, dict) -> Any
         queue = queue_name if queue_name else DEFAULT_QUEUE
         max_retries = max_retries_count if max_retries_count else DEFAULT_MAX_RETRIES
         pickle = use_pickle if use_pickle else USE_PICKLE
@@ -23,43 +18,21 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
         delay = kwargs.pop('delay', DEFAULT_DELAY) if kwargs else DEFAULT_DELAY
 
         worker_task = WorkerTask(queue, func, args, kwargs, max_retries, 0, pickle)
-
-        if execute_inline:
-            if FORCE_SERIALIZATION:
-                WorkerTask.deserialize(worker_task.serialize()).execute()
-            else:
-                return worker_task.execute()
-        else:
-            logger.info('Delaying task %s: %s, %s (%s)', worker_task.abs_func_name, args, kwargs, queue)
-            sqs.add_message(queue, worker_task.serialize(), delay)
+        worker = Worker(SqsQueueClient.get_instance())
+        return worker.enqueue(worker_task, delay, execute_inline)
 
     return wrapper
-
-
-class MaxRetriesReachedException(Exception):
-        def __init__(self, retries):
-            # type: (int) -> None
-            super(MaxRetriesReachedException, self).__init__()
-            self.retries = retries
 
 
 def func_retry_decorator(worker_task):
     # type: (WorkerTask) -> (tuple, dict)
     def wrapper(*args, **kwargs):
-        # type: (tuple, dict) -> None
-        worker_task.retry += 1
-        if worker_task.retry > worker_task.max_retries:
-            raise MaxRetriesReachedException(worker_task.retry)
-
+        # type: (tuple, dict) -> Any
         execute_inline = kwargs.pop('execute_inline', EXECUTE_INLINE) if kwargs else EXECUTE_INLINE
         delay = kwargs.pop('delay', DEFAULT_DELAY) if kwargs else DEFAULT_DELAY
 
-        if execute_inline:
-            return worker_task.execute()
-        else:
-            logger.info('Retrying task %s: %s, %s (%s, retry: %s)', worker_task.abs_func_name, worker_task.args, worker_task.kwargs, worker_task.queue, worker_task.retry)
-            sqs.add_message(worker_task.queue, worker_task.serialize(), delay)
-
+        worker = Worker(SqsQueueClient.get_instance())
+        return worker.enqueue(worker_task, delay, execute_inline, is_retry=True)
     return wrapper
 
 
