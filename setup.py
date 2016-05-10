@@ -14,7 +14,7 @@ setup(
     long_description=README,
     url='https://github.com/sookasa/django-eb-sqs',
     install_requires=[
-        'boto3>=1.2.3',
+        'boto3>=1.3.1',
         'Django>=1.7',
         'requests>=2',
     ]
