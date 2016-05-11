@@ -17,6 +17,7 @@ USE_PICKLE = getattr(settings, 'EB_SQS_USE_PICKLE', False) # type: bool
 GROUP_CALLBACK_TASK = getattr(settings, 'EB_SQS_GROUP_CALLBACK_TASK', None) # type: Any
 
 REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None) # type: StrictRedis
+# default: 7 days
 REDIS_EXPIRY = getattr(settings, 'EB_SQS_REDIS_EXPIRY', 3600*24*7) # type: int
 
 WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None) # type: WorkerFactory
