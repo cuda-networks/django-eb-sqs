@@ -84,29 +84,53 @@ Set this url in the Elastic Beanstalk Worker settings prior to deployment.
 
 During development you can use the included Django command to execute a small script which retrieves messages from SQS and posts them to this endpoint.
 
-```python
+```bash
 python manage.py run_eb_sqs_worker --url <absoulte endpoint url> --queue <queue-name>
 ```
 
 For example:
 
-```python
+```bash
 python manage.py run_eb_sqs_worker --url http://127.0.0.1:80/worker/process --queue default
 ```
 
+
+#### Group Tasks
+Multiple tasks can be grouped by specifing the `group_id` argument when calling `delay` on a task.
+If all tasks of a specific group are executed then the group callback task specified by `EB_SQS_GROUP_CALLBACK_TASK` is executed.
+
+Example calls:
+```python
+echo.delay(message='Hello World!', group_id='1')
+echo.delay(message='Hallo Welt!', group_id='1')
+echo.delay(message='Hola mundo!', group_id='1')
+```
+
+Example callback which is executed when all three tasks are finished:
+```python
+from eb_sqs.decorators import task
+
+@task(queue='test', max_retries=5)
+def group_finished(group_id):
+    pass
+```
 
 #### Settings
 
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
 
 - EB_SQS_AUTO_ADD_QUEUE (`True`): If queues should be added automatically to AWS if they don't exist.
-- EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
+- EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
+- EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.
-- EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
-- EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
+- EB_SQS_GROUP_CALLBACK_TASK (`None`): Group callback. Must be a valid task.
+- EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
+- EB_SQS_REDIS_CLIENT (`None`): Set the Redis connection client (`StrictRedis`)
+- EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
+
 
 ### Development
 
@@ -116,6 +140,6 @@ Make sure to install the development dependencies from `development.txt`.
 
 The build in tests can be executed with the Django test runner.
 
-```python
+```bash
 django-admin test --settings=eb_sqs.test_settings
 ```
