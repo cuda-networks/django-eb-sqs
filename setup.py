@@ -16,6 +16,7 @@ setup(
     install_requires=[
         'boto3>=1.3.1',
         'Django>=1.7',
+        'redis>=2.10',
         'requests>=2',
     ]
 )

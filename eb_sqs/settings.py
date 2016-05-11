@@ -14,8 +14,9 @@ DEFAULT_MAX_RETRIES = getattr(settings, 'EB_SQS_DEFAULT_MAX_RETRIES', 0) # type:
 
 USE_PICKLE = getattr(settings, 'EB_SQS_USE_PICKLE', False) # type: bool
 
-GROUP_CALLBACK_TASK = getattr(settings, 'EB_SQS_GROUP_CALLBACK_TASK', None)
+GROUP_CALLBACK_TASK = getattr(settings, 'EB_SQS_GROUP_CALLBACK_TASK', None) # type: Any
 
-REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None)
+REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None) # type: StrictRedis
+REDIS_EXPIRY = getattr(settings, 'EB_SQS_REDIS_EXPIRY', 3600*24*7) # type: int
 
-WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None)
+WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None) # type: WorkerFactory
