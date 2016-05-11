@@ -16,12 +16,12 @@ def dummy_function():
     pass
 
 
-class SerializationTest(TestCase):
+class WorkerTaskTest(TestCase):
     def setUp(self):
-        self.dummy_msg = '{"retry": 0, "args": [], "queue": "default", "max_retries": 5, "func": "eb_sqs.tests.worker.tests_worker_task.dummy_function", "kwargs": {}, "pickle": false}'
+        self.dummy_msg = '{"queue": "default", "retry": 0, "func": "eb_sqs.tests.worker.tests_worker_task.dummy_function", "kwargs": {}, "maxRetries": 5, "args": [], "pickle": false, "id": "id-1", "groupId": "group-5"}'
 
     def test_serialize_worker_task(self):
-        worker_task = WorkerTask('default', dummy_function, [], {}, 5, 0, False)
+        worker_task = WorkerTask('id-1', 'group-5', 'default', dummy_function, [], {}, 5, 0, False)
         msg = worker_task.serialize()
 
         self.assertEqual(msg, self.dummy_msg)
@@ -29,6 +29,8 @@ class SerializationTest(TestCase):
     def test_deserialize_worker_task(self):
         worker_task = WorkerTask.deserialize(self.dummy_msg)
 
+        self.assertEqual(worker_task.id, 'id-1')
+        self.assertEqual(worker_task.group_id, 'group-5')
         self.assertEqual(worker_task.queue, 'default')
         self.assertEqual(worker_task.func, dummy_function)
         self.assertEqual(worker_task.args, [])
@@ -37,7 +39,7 @@ class SerializationTest(TestCase):
         self.assertEqual(worker_task.retry, 0)
 
     def test_serialize_pickle(self):
-        worker_task1 = WorkerTask('default', dummy_function, [], {'object': TestObject()}, 5, 0, True)
+        worker_task1 = WorkerTask('id-1', None, 'default', dummy_function, [], {'object': TestObject()}, 5, 0, True)
         msg = worker_task1.serialize()
 
         worker_task2 = WorkerTask.deserialize(msg)

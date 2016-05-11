@@ -3,42 +3,43 @@ from __future__ import absolute_import, unicode_literals
 from unittest import TestCase
 
 from django.test import Client
+from mock import Mock
 
-from eb_sqs.decorators import task
-
-
-@task()
-def dummy_task(msg):
-    return msg
-
-
-@task()
-def dummy_task_with_exception():
-    # type: () -> None
-    raise Exception()
+from eb_sqs import settings
+from eb_sqs.worker.worker import Worker
+from eb_sqs.worker.worker_exceptions import InvalidMessageFormatException, ExecutionFailedException
+from eb_sqs.worker.worker_factory import WorkerFactory
 
 
 class ApiTest(TestCase):
-    def test_process_endpoint(self):
-        client = Client()
-        msg = '{"retry": 0, "queue": "default", "max_retries": 5, "args": [], "func": "eb_sqs.tests.tests_views.dummy_task", "kwargs": {"msg": "Hello World!"}}'
+    def setup_worker(self, side_effect):
+        worker_mock = Mock(autospec=Worker)
+        worker_mock.execute.side_effect = side_effect
 
-        response = client.post('/process', content_type='application/json', data=msg)
+        worker_factory_mock = Mock(autospec=WorkerFactory)
+        worker_factory_mock.create.return_value = worker_mock
+
+        settings.WORKER_FACTORY = worker_factory_mock
+
+    def test_process_endpoint(self):
+        self.setup_worker(None)
+        client = Client()
+        response = client.post('/process', content_type='application/json', data='')
 
         self.assertEqual(response.status_code, 200)
 
     def test_process_endpoint_invalid_format(self):
+        self.setup_worker(InvalidMessageFormatException('', None))
         client = Client()
-        msg = '{ "key": "value"}'
 
-        response = client.post('/process', content_type='application/json', data=msg)
+        response = client.post('/process', content_type='application/json', data='')
 
         self.assertEqual(response.status_code, 400)
 
     def test_process_endpoint_invalid_function(self):
+        self.setup_worker(ExecutionFailedException('', None))
         client = Client()
-        msg = '{"retry": 0, "queue": "default", "max_retries": 5, "args": [], "func": "eb_sqs.tests.tests_views.dummy_task_with_exception", "kwargs": {}, "pickle": false}'
 
-        response = client.post('/process', content_type='application/json', data=msg)
+        response = client.post('/process', content_type='application/json', data='')
 
         self.assertEqual(response.status_code, 500)

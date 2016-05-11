@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import uuid
 
 from eb_sqs.settings import FORCE_SERIALIZATION, GROUP_CALLBACK_TASK
 from eb_sqs.worker.group_client import GroupClient
@@ -42,6 +43,10 @@ class Worker(object):
             )
 
             return self._execute_task(worker_task)
+        except QueueException:
+            raise
+        except MaxRetriesReachedException:
+            raise
         except Exception as ex:
             logger.exception(
                 'Task %s (%s) failed to execute with args: %s and kwargs: %s: %s',
@@ -54,8 +59,18 @@ class Worker(object):
 
             raise ExecutionFailedException(worker_task.abs_func_name, ex)
 
-    def enqueue(self, worker_task, delay, execute_inline, is_retry=False):
-        # type: (WorkerTask, unicode, int, bool) -> Any
+    def delay(self, group_id, queue_name, func, args, kwargs, max_retries, use_pickle, delay, execute_inline):
+        # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
+        id = unicode(uuid.uuid4())
+        worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, use_pickle)
+        return self._enqueue_task(worker_task, delay, execute_inline)
+
+    def retry(self, worker_task, delay, execute_inline):
+        # type: (WorkerTask, int, bool) -> Any
+        return self._enqueue_task(worker_task, delay, execute_inline, is_retry=True)
+
+    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry=False):
+        # type: (WorkerTask, int, bool, bool) -> Any
         try:
             if is_retry:
                 worker_task.retry += 1

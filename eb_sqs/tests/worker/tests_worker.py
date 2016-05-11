@@ -2,14 +2,16 @@ from __future__ import absolute_import, unicode_literals
 
 from unittest import TestCase
 
-import boto3
-import time
-from moto import mock_sqs
+from mock import Mock
 
-from eb_sqs.aws.sqs_queue_client import SqsQueueClient
+from eb_sqs import settings
 from eb_sqs.decorators import task
+from eb_sqs.worker.group_client import GroupClient
+from eb_sqs.worker.queue_client import QueueClient
 from eb_sqs.worker.worker import Worker
 from eb_sqs.worker.worker_exceptions import MaxRetriesReachedException
+from eb_sqs.worker.worker_factory import WorkerFactory
+from eb_sqs.worker.worker_task import WorkerTask
 
 
 @task()
@@ -17,88 +19,53 @@ def dummy_task(msg):
     return msg
 
 
-@task(max_retries=5)
-def dummy_retry_inline_task(msg):
-    # type: (unicode) -> None
-    dummy_retry_inline_task.retry(execute_inline=True)
+class WorkerTest(TestCase):
+    def setUp(self):
+        self.queue_mock = Mock(autospec=QueueClient)
+        self.group_mock = Mock(autospec=GroupClient)
+        self.worker = Worker(self.queue_mock, self.group_mock)
 
+        factory_mock = Mock(autospec=WorkerFactory)
+        factory_mock.create.return_value = self.worker
+        settings.WORKER_FACTORY = factory_mock
 
-@task(max_retries=5)
-def dummy_retry_task(msg):
-    # type: (unicode) -> None
-    if dummy_retry_task.retry_num == 0:
-        dummy_retry_task.retry()
-
-
-class TaskExecutionTest(TestCase):
-    def test_inline_execution(self):
-        result = dummy_task.delay('Hello World!', execute_inline=True)
-
-        self.assertEqual(result, 'Hello World!')
-
-    def test_inline_retry_execution(self):
-        with self.assertRaises(MaxRetriesReachedException):
-            dummy_retry_inline_task.delay('Hello World!', execute_inline=True)
-
-    @mock_sqs()
-    def test_delay_0_execution(self):
-        sqs = boto3.resource('sqs')
-        queue = sqs.create_queue(QueueName='eb-sqs-default')
-
-        dummy_task.delay('Hello World!')
-
-        queue.reload()
-        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '1')
-
-    @mock_sqs()
-    def test_delay_1_execution(self):
-        delay = 1
-        sqs = boto3.resource('sqs')
-        queue = sqs.create_queue(QueueName='eb-sqs-default')
-
-        dummy_task.delay('Hello World!', delay=delay)
-
-        queue.reload()
-        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '0')
-
-        time.sleep(delay+0.1)
-
-        queue.reload()
-        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '1')
-
-    @mock_sqs()
-    def test_retry_execution(self):
-        sqs = boto3.resource('sqs')
-        queue = sqs.create_queue(QueueName='eb-sqs-default')
-        worker = Worker(SqsQueueClient.get_instance())
-
-        dummy_retry_task.delay('Hello World!')
-        self.assertEqual(dummy_retry_task.retry_num, 0)
-
-        messages = queue.receive_messages()
-        self.assertEqual(len(messages), 1)
-        queue.reload()
-
-        # Execute task (calls retry inside the task)
-        worker.execute(messages[0].body)
-        self.assertEqual(dummy_retry_task.retry_num, 0)
-
-        messages = queue.receive_messages()
-        self.assertEqual(len(messages), 1)
-        queue.reload()
-
-        # Execute retry task
-        worker.execute(messages[0].body)
-        self.assertEqual(dummy_retry_task.retry_num, 1)
-
-        queue.reload()
-        self.assertEqual(queue.attributes["ApproximateNumberOfMessages"], '0')
-
-    @mock_sqs()
     def test_worker_execution(self):
-        msg = '{"retry": 0, "queue": "default", "max_retries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
+        msg = '{"id": "id-1", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
 
-        worker = Worker(SqsQueueClient.get_instance())
-        result = worker.execute(msg)
+        result = self.worker.execute(msg)
 
         self.assertEqual(result, 'Hello World!')
+
+    def test_delay(self):
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, False)
+
+        self.queue_mock.add_message.assert_called_once()
+        queue_delay = self.queue_mock.add_message.call_args[0][2]
+        self.assertEqual(queue_delay, 3)
+
+    def test_delay_inline(self):
+        result = self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 0, True)
+
+        self.queue_mock.add_message.assert_not_called()
+        self.assertEqual(result, 'Hello World!')
+
+    def test_retry_execution(self):
+        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, False)
+        self.assertEqual(dummy_task.retry_num, 0)
+
+        self.worker.retry(task, 0, False)
+
+        self.queue_mock.add_message.assert_called_once()
+
+    def test_retry_max_reached_execution(self):
+        with self.assertRaises(MaxRetriesReachedException):
+            task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, False)
+            self.assertEqual(dummy_task.retry_num, 0)
+
+            self.worker.retry(task, 0, True)
+            self.assertEqual(dummy_task.retry_num, 1)
+
+            self.worker.retry(task, 0, True)
+            self.assertEqual(dummy_task.retry_num, 2)
+
+            self.worker.retry(task, 0, True)

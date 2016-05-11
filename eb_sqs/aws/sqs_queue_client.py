@@ -8,17 +8,6 @@ from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException
 
 
 class SqsQueueClient(QueueClient):
-    _SQS_INSTANCE = None # type: SqsQueueClient
-    @staticmethod
-    def get_instance():
-        # type: () -> SqsQueueClient
-        """
-        Returns a SQS client instance with active queue cache
-        """
-        if not SqsQueueClient._SQS_INSTANCE:
-            SqsQueueClient._SQS_INSTANCE = SqsQueueClient()
-        return SqsQueueClient._SQS_INSTANCE
-
     def __init__(self):
         # type: () -> None
         self.sqs = boto3.resource('sqs')

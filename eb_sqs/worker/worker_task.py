@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import base64
 import importlib
 import json
-import uuid
 
 try:
    import cPickle as pickle
@@ -13,9 +12,9 @@ except:
 
 class WorkerTask(object):
     def __init__(self, id, group_id, queue, func, args, kwargs, max_retries, retry, use_pickle):
-        # type: (unicode, Any, tuple, dict, int, int, bool) -> None
+        # type: (unicode, unicode, unicode, Any, tuple, dict, int, int, bool) -> None
         super(WorkerTask, self).__init__()
-        self.id = id if id else unicode(uuid.uuid4())
+        self.id = id
         self.group_id = group_id
         self.queue = queue
         self.func = func
