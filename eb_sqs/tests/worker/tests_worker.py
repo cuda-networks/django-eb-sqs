@@ -23,6 +23,7 @@ class WorkerTest(TestCase):
     def setUp(self):
         self.queue_mock = Mock(autospec=QueueClient)
         self.group_mock = Mock(autospec=GroupClient)
+        self.group_mock.remove.return_value = True
         self.worker = Worker(self.queue_mock, self.group_mock)
 
         factory_mock = Mock(autospec=WorkerFactory)
@@ -37,17 +38,31 @@ class WorkerTest(TestCase):
         self.assertEqual(result, 'Hello World!')
 
     def test_delay(self):
-        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, False)
+        self.worker.delay(None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, False)
 
+        self.group_mock.add.assert_not_called()
         self.queue_mock.add_message.assert_called_once()
         queue_delay = self.queue_mock.add_message.call_args[0][2]
         self.assertEqual(queue_delay, 3)
 
     def test_delay_inline(self):
-        result = self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 0, True)
+        result = self.worker.delay(None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 0, True)
 
         self.queue_mock.add_message.assert_not_called()
         self.assertEqual(result, 'Hello World!')
+
+    def test_delay_with_group(self):
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, False)
+
+        self.group_mock.add.assert_called_once()
+
+    def test_group_callback(self):
+        settings.GROUP_CALLBACK_TASK = Mock()
+
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, True)
+
+        self.group_mock.remove.assert_called_once()
+        settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
 
     def test_retry_execution(self):
         task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, False)

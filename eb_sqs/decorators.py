@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from eb_sqs.settings import DEFAULT_DELAY, DEFAULT_QUEUE, EXECUTE_INLINE, DEFAULT_MAX_RETRIES, USE_PICKLE
+from eb_sqs import settings
 from eb_sqs.worker.worker_factory import WorkerFactory
 
 
@@ -8,12 +8,12 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
     # type: (Any, unicode, int, bool) -> (tuple, dict)
     def wrapper(*args, **kwargs):
         # type: (tuple, dict) -> Any
-        queue = queue_name if queue_name else DEFAULT_QUEUE
-        max_retries = max_retries_count if max_retries_count else DEFAULT_MAX_RETRIES
-        pickle = use_pickle if use_pickle else USE_PICKLE
+        queue = queue_name if queue_name else settings.DEFAULT_QUEUE
+        max_retries = max_retries_count if max_retries_count else settings.DEFAULT_MAX_RETRIES
+        pickle = use_pickle if use_pickle else settings.USE_PICKLE
 
-        execute_inline = kwargs.get('execute_inline', EXECUTE_INLINE) if kwargs else EXECUTE_INLINE
-        delay = kwargs.get('delay', DEFAULT_DELAY) if kwargs else DEFAULT_DELAY
+        execute_inline = kwargs.get('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
+        delay = kwargs.get('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
         group_id = kwargs.get('group_id')
 
         worker = WorkerFactory.default().create()
@@ -26,8 +26,8 @@ def func_retry_decorator(worker_task):
     # type: (WorkerTask) -> (tuple, dict)
     def wrapper(*args, **kwargs):
         # type: (tuple, dict) -> Any
-        execute_inline = kwargs.get('execute_inline', EXECUTE_INLINE) if kwargs else EXECUTE_INLINE
-        delay = kwargs.get('delay', DEFAULT_DELAY) if kwargs else DEFAULT_DELAY
+        execute_inline = kwargs.get('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
+        delay = kwargs.get('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
 
         worker = WorkerFactory.default().create()
         return worker.retry(worker_task, delay, execute_inline)

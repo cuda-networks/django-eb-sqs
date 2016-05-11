@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import uuid
 
-from eb_sqs.settings import FORCE_SERIALIZATION, GROUP_CALLBACK_TASK
+from eb_sqs import settings
 from eb_sqs.worker.group_client import GroupClient
 from eb_sqs.worker.queue_client import QueueDoesNotExistException, QueueClient, QueueClientException
 from eb_sqs.worker.worker_exceptions import InvalidMessageFormatException, ExecutionFailedException, \
@@ -78,10 +78,11 @@ class Worker(object):
                     self._group_callback(worker_task)
                     raise MaxRetriesReachedException(worker_task.retry)
 
-            self.group_client.add(worker_task)
+            if worker_task.group_id:
+                self.group_client.add(worker_task)
 
             if execute_inline:
-                if FORCE_SERIALIZATION:
+                if settings.FORCE_SERIALIZATION:
                     return self._execute_task(WorkerTask.deserialize(worker_task.serialize()))
                 else:
                     return self._execute_task(worker_task)
@@ -118,6 +119,6 @@ class Worker(object):
 
     def _group_callback(self, worker_task):
         # type: (WorkerTask) -> None
-        if self.group_client.remove(worker_task) and GROUP_CALLBACK_TASK:
+        if worker_task.group_id and self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
             logger.info('Tasks in group %s executed. Trigger callback.')
-            GROUP_CALLBACK_TASK.delay(group_id=worker_task.group_id)
+            settings.GROUP_CALLBACK_TASK.delay(group_id=worker_task.group_id)

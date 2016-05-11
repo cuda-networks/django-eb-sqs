@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import boto3
 from botocore.exceptions import ClientError
 
-from eb_sqs.settings import QUEUE_PREFIX, AUTO_ADD_QUEUE
+from eb_sqs import settings
 from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException
 
 
@@ -15,7 +15,7 @@ class SqsQueueClient(QueueClient):
 
     def _get_queue(self, queue_name):
         # type: (unicode) -> Any
-        queue_name = '{}{}'.format(QUEUE_PREFIX, queue_name)
+        queue_name = '{}{}'.format(settings.QUEUE_PREFIX, queue_name)
 
         queue = self._get_sqs_queue(queue_name)
         if not queue:
@@ -41,7 +41,7 @@ class SqsQueueClient(QueueClient):
 
     def _add_sqs_queue(self, queue_name):
         # type: (unicode) -> Any
-        if AUTO_ADD_QUEUE:
+        if settings.AUTO_ADD_QUEUE:
             queue = self.sqs.create_queue(QueueName=queue_name)
             self.queue_cache[queue_name] = queue
             return queue
