@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import base64
 import importlib
 import json
+import uuid
 
 try:
    import cPickle as pickle
@@ -11,9 +12,11 @@ except:
 
 
 class WorkerTask(object):
-    def __init__(self, queue, func, args, kwargs, max_retries, retry, use_pickle):
+    def __init__(self, id, group_id, queue, func, args, kwargs, max_retries, retry, use_pickle):
         # type: (unicode, Any, tuple, dict, int, int, bool) -> None
         super(WorkerTask, self).__init__()
+        self.id = id if id else unicode(uuid.uuid4())
+        self.group_id = group_id
         self.queue = queue
         self.func = func
         self.args = args
@@ -37,11 +40,13 @@ class WorkerTask(object):
         kwargs = WorkerTask._pickle_args(self.kwargs) if self.use_pickle else self.kwargs
 
         task = {
+                'id': self.id,
+                'groupId': self.group_id,
                 'queue': self.queue,
                 'func': self.abs_func_name,
                 'args': args,
                 'kwargs': kwargs,
-                'max_retries': self.max_retries,
+                'maxRetries': self.max_retries,
                 'retry': self.retry,
                 'pickle': self.use_pickle,
             }
@@ -58,6 +63,9 @@ class WorkerTask(object):
         # type: (unicode) -> WorkerTask
         task = json.loads(msg)
 
+        id = task['id']
+        group_id = task.get('groupId')
+
         abs_func_name = task['func']
         func_name = abs_func_name.split(".")[-1]
         func_path = ".".join(abs_func_name.split(".")[:-1])
@@ -69,10 +77,10 @@ class WorkerTask(object):
         queue = task['queue']
         args = WorkerTask._unpickle_args(task['args']) if use_pickle else task['args']
         kwargs = WorkerTask._unpickle_args(task['kwargs']) if use_pickle else task['kwargs']
-        max_retries = task['max_retries']
+        max_retries = task['maxRetries']
         retry = task['retry']
 
-        return WorkerTask(queue, func, args, kwargs, max_retries, retry, use_pickle)
+        return WorkerTask(id, group_id, queue, func, args, kwargs, max_retries, retry, use_pickle)
 
     @staticmethod
     def _unpickle_args(args):

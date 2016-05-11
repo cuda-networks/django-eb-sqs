@@ -28,7 +28,11 @@ class MaxRetriesReachedException(WorkerException):
         self.retries = retries
 
 
-class InvalidQueueException(WorkerException):
+class QueueException(WorkerException):
+        pass
+
+
+class InvalidQueueException(QueueException):
     def __init__(self, queue_name):
         # type: (unicode) -> None
         super(InvalidQueueException, self).__init__()
