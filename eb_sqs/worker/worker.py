@@ -34,15 +34,25 @@ class Worker(object):
             raise InvalidMessageFormatException(msg, ex)
 
         try:
-            logger.info(
-                'Execute task %s (%s) with args: %s and kwargs: %s',
-                worker_task.abs_func_name,
-                worker_task.id,
-                worker_task.args,
-                worker_task.kwargs
-            )
+            if settings.DEAD_LETTER_MODE:
+                # If in dead letter mode only try to run callback. Do not execute task.
+                logger.info(
+                    'Task %s (%s) not executed (dead letter queue)',
+                    worker_task.abs_func_name,
+                    worker_task.id,
+                )
 
-            return self._execute_task(worker_task)
+                self._group_callback(worker_task)
+            else:
+                logger.info(
+                    'Execute task %s (%s) with args: %s and kwargs: %s',
+                    worker_task.abs_func_name,
+                    worker_task.id,
+                    worker_task.args,
+                    worker_task.kwargs
+                )
+
+                return self._execute_task(worker_task)
         except QueueException:
             raise
         except MaxRetriesReachedException:
@@ -120,5 +130,12 @@ class Worker(object):
     def _group_callback(self, worker_task):
         # type: (WorkerTask) -> None
         if worker_task.group_id and self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
-            logger.info('Tasks in group %s executed. Trigger callback.')
-            settings.GROUP_CALLBACK_TASK.delay(group_id=worker_task.group_id)
+            callback = settings.GROUP_CALLBACK_TASK
+
+            logger.info(
+                'All tasks in group %s finished. Trigger callback %s',
+                worker_task.group_id,
+                '{}.{}'.format(callback.__module__, callback.func_name),
+            )
+
+            callback.delay(group_id=worker_task.group_id)

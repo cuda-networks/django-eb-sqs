@@ -120,6 +120,7 @@ def group_finished(group_id):
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
 
 - EB_SQS_AUTO_ADD_QUEUE (`True`): If queues should be added automatically to AWS if they don't exist.
+- EB_SQS_DEAD_LETTER_MODE (`False`): Enable if this worker is handling the SQS dead letter queue. Tasks won't be executed but group callback is.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.

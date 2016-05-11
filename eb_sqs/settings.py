@@ -21,3 +21,5 @@ REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None) # type: StrictRedi
 REDIS_EXPIRY = getattr(settings, 'EB_SQS_REDIS_EXPIRY', 3600*24*7) # type: int
 
 WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None) # type: WorkerFactory
+
+DEAD_LETTER_MODE = getattr(settings, 'EB_SQS_DEAD_LETTER_MODE', False) # type: bool

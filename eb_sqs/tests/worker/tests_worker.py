@@ -21,6 +21,8 @@ def dummy_task(msg):
 
 class WorkerTest(TestCase):
     def setUp(self):
+        settings.DEAD_LETTER_MODE = False
+
         self.queue_mock = Mock(autospec=QueueClient)
         self.group_mock = Mock(autospec=GroupClient)
         self.group_mock.remove.return_value = True
@@ -30,12 +32,31 @@ class WorkerTest(TestCase):
         factory_mock.create.return_value = self.worker
         settings.WORKER_FACTORY = factory_mock
 
-    def test_worker_execution(self):
+    def test_worker_execution_no_group(self):
         msg = '{"id": "id-1", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
 
         result = self.worker.execute(msg)
 
         self.assertEqual(result, 'Hello World!')
+        self.group_mock.remove.assert_not_called()
+
+    def test_worker_execution_with_group(self):
+        msg = '{"id": "id-1", "groupId": "group-5", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
+
+        result = self.worker.execute(msg)
+
+        self.assertEqual(result, 'Hello World!')
+        self.group_mock.remove.assert_called_once()
+
+    def test_worker_execution_dead_letter_queue(self):
+        settings.DEAD_LETTER_MODE = True
+
+        msg = '{"id": "id-1", "groupId": "group-5", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
+
+        result = self.worker.execute(msg)
+
+        self.assertIsNone(result)
+        self.group_mock.remove.assert_called_once()
 
     def test_delay(self):
         self.worker.delay(None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, False)
