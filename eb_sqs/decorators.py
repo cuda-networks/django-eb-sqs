@@ -12,9 +12,9 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
         max_retries = max_retries_count if max_retries_count else settings.DEFAULT_MAX_RETRIES
         pickle = use_pickle if use_pickle else settings.USE_PICKLE
 
-        execute_inline = kwargs.get('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
-        delay = kwargs.get('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
-        group_id = kwargs.get('group_id')
+        execute_inline = kwargs.pop('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
+        delay = kwargs.pop('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
+        group_id = kwargs.pop('group_id', None)
 
         worker = WorkerFactory.default().create()
         return worker.delay(group_id, queue, func, args, kwargs, max_retries, pickle, delay, execute_inline)
@@ -26,8 +26,8 @@ def func_retry_decorator(worker_task):
     # type: (WorkerTask) -> (tuple, dict)
     def wrapper(*args, **kwargs):
         # type: (tuple, dict) -> Any
-        execute_inline = kwargs.get('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
-        delay = kwargs.get('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
+        execute_inline = kwargs.pop('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
+        delay = kwargs.pop('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
 
         worker = WorkerFactory.default().create()
         return worker.retry(worker_task, delay, execute_inline)

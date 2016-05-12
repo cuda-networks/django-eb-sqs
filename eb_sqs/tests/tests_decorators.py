@@ -38,6 +38,15 @@ class DecoratorsTest(TestCase):
         dummy_task.delay('Hello World!')
         self.worker_mock.delay.assert_called_once()
 
+    def test_delay_decorator_parameters(self):
+        dummy_task.delay('Hello World!', group_id='group-5', delay=5, execute_inline=True)
+
+        self.worker_mock.delay.assert_called_once()
+
+        # Parameter should have been removed from kwargs before being passed to the actual function
+        kwargs = self.worker_mock.delay.call_args[0][4]
+        self.assertEqual(kwargs, {})
+
     def test_retry_decorator(self):
         dummy_retry_task.delay('Hello World!')
         self.worker_mock.delay.assert_called_once()
