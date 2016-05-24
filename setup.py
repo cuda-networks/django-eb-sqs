@@ -6,7 +6,7 @@ README = open(os.path.join(here, 'README.md')).read()
 
 setup(
     name='django-eb-sqs',
-    version='0.5',
+    version='0.6',
     package_dir={'eb_sqs': 'eb_sqs'},
     include_package_data=True,
     packages=find_packages(),

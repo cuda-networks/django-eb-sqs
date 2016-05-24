@@ -126,7 +126,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.
-- EB_SQS_GROUP_CALLBACK_TASK (`None`): Group callback. Must be a valid task.
+- EB_SQS_GROUP_CALLBACK_TASK (`None`): Group callback (String or Function). Must be a valid task.
 - EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
 - EB_SQS_REDIS_CLIENT (`None`): Set the Redis connection client (`StrictRedis`)
 - EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed

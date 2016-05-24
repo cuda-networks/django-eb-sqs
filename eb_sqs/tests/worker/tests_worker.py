@@ -18,6 +18,7 @@ from eb_sqs.worker.worker_task import WorkerTask
 def dummy_task(msg):
     return msg
 
+global_group_mock = Mock()
 
 class WorkerTest(TestCase):
     def setUp(self):
@@ -84,6 +85,18 @@ class WorkerTest(TestCase):
 
         self.group_mock.remove.assert_called_once()
         settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
+
+        settings.GROUP_CALLBACK_TASK = None
+
+    def test_group_callback_string(self):
+        settings.GROUP_CALLBACK_TASK = 'eb_sqs.tests.worker.tests_worker.global_group_mock'
+
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, True)
+
+        self.group_mock.remove.assert_called_once()
+        global_group_mock.delay.assert_called_once()
+
+        settings.GROUP_CALLBACK_TASK = None
 
     def test_retry_execution(self):
         task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, False)

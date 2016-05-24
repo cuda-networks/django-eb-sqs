@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import importlib
 import logging
 import uuid
 
@@ -131,6 +132,13 @@ class Worker(object):
         # type: (WorkerTask) -> None
         if worker_task.group_id and self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
             callback = settings.GROUP_CALLBACK_TASK
+
+            if isinstance(callback, basestring):
+                func_name = callback.split(".")[-1]
+                func_path = ".".join(callback.split(".")[:-1])
+                func_module = importlib.import_module(func_path)
+
+                callback = getattr(func_module, func_name)
 
             logger.info(
                 'All tasks in group %s finished. Trigger callback %s',
