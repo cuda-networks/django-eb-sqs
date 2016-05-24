@@ -146,4 +146,4 @@ class Worker(object):
                 '{}.{}'.format(callback.__module__, callback.func_name),
             )
 
-            callback.delay(group_id=worker_task.group_id)
+            callback.delay(worker_task.group_id)
