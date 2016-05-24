@@ -25,7 +25,8 @@ class RedisGroupClient(GroupClient):
         """
         :return: True if last task in group
         """
-        return self._redis_client.srem(worker_task.group_id, worker_task.id) > 0
+        if self._redis_client.srem(worker_task.group_id, worker_task.id) > 0:
+            return self._redis_client.scard(worker_task.group_id) == 0
 
     def active_tasks(self, group_id):
         # type: (unicode) -> int
