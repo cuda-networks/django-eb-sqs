@@ -102,19 +102,36 @@ class WorkerTest(TestCase):
         task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, False)
         self.assertEqual(dummy_task.retry_num, 0)
 
-        self.worker.retry(task, 0, False)
+        self.worker.retry(task, 0, False, True)
 
         self.queue_mock.add_message.assert_called_once()
 
     def test_retry_max_reached_execution(self):
+        dummy_task.retry_num = 0
+
         with self.assertRaises(MaxRetriesReachedException):
             task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, False)
             self.assertEqual(dummy_task.retry_num, 0)
 
-            self.worker.retry(task, 0, True)
+            self.worker.retry(task, 0, True, True)
             self.assertEqual(dummy_task.retry_num, 1)
 
-            self.worker.retry(task, 0, True)
+            self.worker.retry(task, 0, True, True)
             self.assertEqual(dummy_task.retry_num, 2)
 
-            self.worker.retry(task, 0, True)
+            self.worker.retry(task, 0, True, True)
+
+    def test_retry_no_limit(self):
+        dummy_task.retry_num = 0
+
+        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, False)
+        self.assertEqual(dummy_task.retry_num, 0)
+
+        self.worker.retry(task, 0, True, False)
+        self.assertEqual(dummy_task.retry_num, 0)
+
+        self.worker.retry(task, 0, True, False)
+        self.assertEqual(dummy_task.retry_num, 0)
+
+        self.worker.retry(task, 0, True, False)
+        self.assertEqual(dummy_task.retry_num, 0)

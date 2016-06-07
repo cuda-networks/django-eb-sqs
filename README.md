@@ -63,7 +63,7 @@ def upload_file(message):
         upload_file.retry()
 ```
 
-The retry call supports the `delay` and `execute_inline` arguments in order to delay the retry or execute it inline. Use 'retry_num' to get the number of retries for the current task.
+The retry call supports the `delay` and `execute_inline` arguments in order to delay the retry or execute it inline. If the retry shall not be counted for the max retry limit set `count_retries` to false. Use 'retry_num' to get the number of retries for the current task.
 
 **NOTE:** `retry()` throws a `MaxRetriesReachedException` exception if the maximum number of retries is reached.
 
@@ -123,6 +123,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEAD_LETTER_MODE (`False`): Enable if this worker is handling the SQS dead letter queue. Tasks won't be executed but group callback is.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
+- EB_SQS_DEFAULT_COUNT_RETRIES (`True`): Count retry calls. Needed if max retries check shall be executed.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
 - EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.

@@ -74,13 +74,13 @@ class Worker(object):
         # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
         id = unicode(uuid.uuid4())
         worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, use_pickle)
-        return self._enqueue_task(worker_task, delay, execute_inline)
+        return self._enqueue_task(worker_task, delay, execute_inline, False)
 
-    def retry(self, worker_task, delay, execute_inline):
-        # type: (WorkerTask, int, bool) -> Any
-        return self._enqueue_task(worker_task, delay, execute_inline, is_retry=True)
+    def retry(self, worker_task, delay, execute_inline, count_retries):
+        # type: (WorkerTask, int, bool, bool) -> Any
+        return self._enqueue_task(worker_task, delay, execute_inline, count_retries)
 
-    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry=False):
+    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry):
         # type: (WorkerTask, int, bool, bool) -> Any
         try:
             if is_retry:

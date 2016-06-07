@@ -32,9 +32,10 @@ def func_retry_decorator(worker_task):
         # type: (tuple, dict) -> Any
         execute_inline = kwargs.pop('execute_inline', settings.EXECUTE_INLINE) if kwargs else settings.EXECUTE_INLINE
         delay = kwargs.pop('delay', settings.DEFAULT_DELAY) if kwargs else settings.DEFAULT_DELAY
+        count_retries = kwargs.pop('count_retries', settings.DEFAULT_COUNT_RETRIES) if kwargs else settings.DEFAULT_COUNT_RETRIES
 
         worker = WorkerFactory.default().create()
-        return worker.retry(worker_task, delay, execute_inline)
+        return worker.retry(worker_task, delay, execute_inline, count_retries)
     return wrapper
 
 
