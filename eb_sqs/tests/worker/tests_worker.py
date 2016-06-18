@@ -18,6 +18,16 @@ from eb_sqs.worker.worker_task import WorkerTask
 def dummy_task(msg):
     return msg
 
+@task()
+def repeating_group_task(count):
+    if count > 0:
+        repeating_group_task.delay(count - 1, group_id='group-id', execute_inline=True)
+
+@task(max_retries=5)
+def max_retries_group_task():
+    repeating_group_task.delay(3, group_id='group-id', execute_inline=True)
+    max_retries_group_task.retry()
+
 global_group_mock = Mock()
 
 class WorkerTest(TestCase):
@@ -81,7 +91,7 @@ class WorkerTest(TestCase):
     def test_group_callback(self):
         settings.GROUP_CALLBACK_TASK = Mock()
 
-        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, True)
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 0, True)
 
         self.group_mock.remove.assert_called_once()
         settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
@@ -91,10 +101,37 @@ class WorkerTest(TestCase):
     def test_group_callback_string(self):
         settings.GROUP_CALLBACK_TASK = 'eb_sqs.tests.worker.tests_worker.global_group_mock'
 
-        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 3, True)
+        self.worker.delay('group-id', 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, False, 0, True)
 
         self.group_mock.remove.assert_called_once()
         global_group_mock.delay.assert_called_once()
+
+        settings.GROUP_CALLBACK_TASK = None
+
+    def test_group(self):
+        settings.GROUP_CALLBACK_TASK = Mock()
+
+        group_set = set()
+        self.group_mock.add.side_effect = lambda task: group_set.add(task.id)
+        self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(task.id) is None else False
+
+        repeating_group_task.delay(3, group_id='group-id', execute_inline=True)
+
+        settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
+
+        settings.GROUP_CALLBACK_TASK = None
+
+    def test_group_match_retries_reached(self):
+        settings.GROUP_CALLBACK_TASK = Mock()
+
+        group_set = set()
+        self.group_mock.add.side_effect = lambda task: group_set.add(task.id)
+        self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(
+            task.id) is None else False
+
+        max_retries_group_task.delay(group_id='group-id', execute_inline=True)
+
+        settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
 
         settings.GROUP_CALLBACK_TASK = None
 
