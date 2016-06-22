@@ -20,6 +20,7 @@ GROUP_CALLBACK_TASK = getattr(settings, 'EB_SQS_GROUP_CALLBACK_TASK', None) # ty
 REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None) # type: StrictRedis
 # default: 7 days
 REDIS_EXPIRY = getattr(settings, 'EB_SQS_REDIS_EXPIRY', 3600*24*7) # type: int
+REDIS_KEY_PREFIX = getattr(settings, 'EB_SQS_REDIS_KEY_PREFIX', 'eb-sqs-') # type: string
 
 WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None) # type: WorkerFactory
 
