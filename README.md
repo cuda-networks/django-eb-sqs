@@ -131,6 +131,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
 - EB_SQS_REDIS_CLIENT (`None`): Set the Redis connection client (`StrictRedis`)
 - EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed
+- EB_SQS_REDIS_KEY_PREFIX (`eb-sqs-`): Prefix used for all Redis keys
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
 
 
