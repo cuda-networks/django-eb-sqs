@@ -74,38 +74,44 @@ class Worker(object):
         # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
         id = unicode(uuid.uuid4())
         worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, use_pickle)
-        return self._enqueue_task(worker_task, delay, execute_inline, False)
+        return self._enqueue_task(worker_task, delay, execute_inline, False, True)
 
     def retry(self, worker_task, delay, execute_inline, count_retries):
         # type: (WorkerTask, int, bool, bool) -> Any
-        return self._enqueue_task(worker_task, delay, execute_inline, count_retries)
+        return self._enqueue_task(worker_task, delay, execute_inline, True, count_retries)
 
-    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry):
-        # type: (WorkerTask, int, bool, bool) -> Any
+    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry, count_retries):
+        # type: (WorkerTask, int, bool, bool, bool) -> Any
         try:
-            if is_retry:
+            if is_retry and count_retries:
                 worker_task.retry += 1
                 if worker_task.retry > worker_task.max_retries:
                     self._group_callback(worker_task)
                     raise MaxRetriesReachedException(worker_task.retry)
 
             if worker_task.group_id:
+                logger.info(
+                    'Add task %s (%s) to group %s',
+                    worker_task.abs_func_name,
+                    worker_task.id,
+                    worker_task.group_id,
+                )
                 self.group_client.add(worker_task)
 
+            logger.info('%s task %s (%s): %s, %s (%s%s)',
+                        'Retrying' if is_retry else 'Delaying',
+                        worker_task.abs_func_name,
+                        worker_task.id,
+                        worker_task.args,
+                        worker_task.kwargs,
+                        worker_task.queue,
+                        ', inline' if execute_inline else '')
             if execute_inline:
                 if settings.FORCE_SERIALIZATION:
                     return self._execute_task(WorkerTask.deserialize(worker_task.serialize()))
                 else:
                     return self._execute_task(worker_task)
             else:
-                logger.info('%s task %s (%s): %s, %s (%s)',
-                            'Retrying' if is_retry else 'Delaying',
-                            worker_task.abs_func_name,
-                            worker_task.id,
-                            worker_task.args,
-                            worker_task.kwargs,
-                            worker_task.queue)
-
                 self.queue_client.add_message(worker_task.queue, worker_task.serialize(), delay)
                 return None
         except QueueDoesNotExistException as ex:
@@ -121,6 +127,9 @@ class Worker(object):
                         ex)
 
             raise QueueException()
+        except Exception:
+            self._group_callback(worker_task)
+            raise
 
     def _execute_task(self, worker_task):
         # type: (WorkerTask) -> Any
@@ -130,7 +139,17 @@ class Worker(object):
 
     def _group_callback(self, worker_task):
         # type: (WorkerTask) -> None
-        if worker_task.group_id and self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
+        if not worker_task.group_id:
+            return
+
+        logger.info(
+            'Remove task %s (%s) from group %s',
+            worker_task.abs_func_name,
+            worker_task.id,
+            worker_task.group_id,
+        )
+
+        if self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
             callback = settings.GROUP_CALLBACK_TASK
 
             if isinstance(callback, basestring):

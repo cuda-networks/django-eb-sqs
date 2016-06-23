@@ -4,7 +4,7 @@ import boto3
 from botocore.exceptions import ClientError
 
 from eb_sqs import settings
-from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException
+from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException, QueueClientException
 
 
 class SqsQueueClient(QueueClient):
@@ -50,8 +50,11 @@ class SqsQueueClient(QueueClient):
 
     def add_message(self, queue_name, msg, delay):
         # type: (unicode, unicode, int) -> None
-        queue = self._get_queue(queue_name)
-        queue.send_message(
-            MessageBody=msg,
-            DelaySeconds=delay
-        )
+        try:
+            queue = self._get_queue(queue_name)
+            queue.send_message(
+                MessageBody=msg,
+                DelaySeconds=delay
+            )
+        except Exception as ex:
+            raise QueueClientException(ex)
