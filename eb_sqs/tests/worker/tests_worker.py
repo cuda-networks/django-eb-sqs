@@ -26,12 +26,13 @@ def repeating_group_task(count):
 @task(max_retries=5)
 def max_retries_group_task():
     repeating_group_task.delay(3, group_id='group-id', execute_inline=True)
-    max_retries_group_task.retry()
+    max_retries_group_task.retry(execute_inline=True)
 
 global_group_mock = Mock()
 
 class WorkerTest(TestCase):
     def setUp(self):
+        settings.FORCE_SERIALIZATION = True
         settings.DEAD_LETTER_MODE = False
 
         self.queue_mock = Mock(autospec=QueueClient)
@@ -129,7 +130,8 @@ class WorkerTest(TestCase):
         self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(
             task.id) is None else False
 
-        max_retries_group_task.delay(group_id='group-id', execute_inline=True)
+        with self.assertRaises(MaxRetriesReachedException):
+            max_retries_group_task.delay(group_id='group-id', execute_inline=True)
 
         settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
 

@@ -43,7 +43,7 @@ class Worker(object):
                     worker_task.id,
                 )
 
-                self._group_callback(worker_task)
+                self._remove_from_group(worker_task)
             else:
                 logger.info(
                     'Execute task %s (%s) with args: %s and kwargs: %s',
@@ -83,20 +83,15 @@ class Worker(object):
     def _enqueue_task(self, worker_task, delay, execute_inline, is_retry, count_retries):
         # type: (WorkerTask, int, bool, bool, bool) -> Any
         try:
-            if is_retry and count_retries:
-                worker_task.retry += 1
-                if worker_task.retry > worker_task.max_retries:
-                    self._group_callback(worker_task)
-                    raise MaxRetriesReachedException(worker_task.retry)
+            if is_retry:
+                if count_retries:
+                    worker_task.retry += 1
+                    if worker_task.retry > worker_task.max_retries:
+                        self._remove_from_group(worker_task)
+                        raise MaxRetriesReachedException(worker_task.retry)
+                worker_task.retry_scheduled = True
 
-            if worker_task.group_id:
-                logger.info(
-                    'Add task %s (%s) to group %s',
-                    worker_task.abs_func_name,
-                    worker_task.id,
-                    worker_task.group_id,
-                )
-                self.group_client.add(worker_task)
+            self._add_to_group(worker_task)
 
             logger.info('%s task %s (%s): %s, %s (%s%s)',
                         'Retrying' if is_retry else 'Delaying',
@@ -106,6 +101,7 @@ class Worker(object):
                         worker_task.kwargs,
                         worker_task.queue,
                         ', inline' if execute_inline else '')
+
             if execute_inline:
                 if settings.FORCE_SERIALIZATION:
                     return self._execute_task(WorkerTask.deserialize(worker_task.serialize()))
@@ -114,11 +110,13 @@ class Worker(object):
             else:
                 self.queue_client.add_message(worker_task.queue, worker_task.serialize(), delay)
                 return None
+        except MaxRetriesReachedException:
+            raise
         except QueueDoesNotExistException as ex:
-            self._group_callback(worker_task)
+            self._remove_from_group(worker_task)
             raise InvalidQueueException(ex.queue_name)
         except QueueClientException as ex:
-            self._group_callback(worker_task)
+            self._remove_from_group(worker_task)
 
             logger.exception('Task %s (%s) failed to enqueue to %s: %s',
                         worker_task.abs_func_name,
@@ -128,28 +126,44 @@ class Worker(object):
 
             raise QueueException()
         except Exception:
-            self._group_callback(worker_task)
+            self._remove_from_group(worker_task)
             raise
 
     def _execute_task(self, worker_task):
         # type: (WorkerTask) -> Any
+        worker_task.retry_scheduled = False
         result = worker_task.execute()
-        self._group_callback(worker_task)
+        self._remove_from_group(worker_task)
         return result
 
-    def _group_callback(self, worker_task):
+    def _add_to_group(self, worker_task):
         # type: (WorkerTask) -> None
-        if not worker_task.group_id:
-            return
+        if worker_task.group_id and not worker_task.retry_scheduled:
+            logger.info(
+                'Add task %s (%s) to group %s',
+                worker_task.abs_func_name,
+                worker_task.id,
+                worker_task.group_id,
+            )
 
-        logger.info(
-            'Remove task %s (%s) from group %s',
-            worker_task.abs_func_name,
-            worker_task.id,
-            worker_task.group_id,
-        )
+            self.group_client.add(worker_task)
 
-        if self.group_client.remove(worker_task) and settings.GROUP_CALLBACK_TASK:
+    def _remove_from_group(self, worker_task):
+        # type: (WorkerTask) -> None
+        if worker_task.group_id and not worker_task.retry_scheduled:
+            logger.info(
+                'Remove task %s (%s) from group %s',
+                worker_task.abs_func_name,
+                worker_task.id,
+                worker_task.group_id,
+            )
+
+            if self.group_client.remove(worker_task):
+                self._execute_group_callback(worker_task)
+
+    def _execute_group_callback(self, worker_task):
+        # type: (WorkerTask) -> None
+        if settings.GROUP_CALLBACK_TASK:
             callback = settings.GROUP_CALLBACK_TASK
 
             if isinstance(callback, basestring):

@@ -25,6 +25,7 @@ class WorkerTask(object):
         self.use_pickle = use_pickle
 
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
+        self.retry_scheduled = False
 
     def execute(self):
         # type: () -> Any
