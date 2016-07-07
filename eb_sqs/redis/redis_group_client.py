@@ -17,11 +17,20 @@ class RedisGroupClient(GroupClient):
         # type: (unicode) -> None
         return '{}{}'.format(settings.REDIS_KEY_PREFIX, group_id)
 
+    def _task_identifier(self, worker_task):
+        # type: (WorkerTask) -> unicode
+        if worker_task.retry_id:
+            return '{}-{}'.format(worker_task.id, worker_task.retry_id)
+        else:
+            return worker_task.id
+
     def add(self, worker_task):
         # type: (WorkerTask) -> None
         name = self._key_name(worker_task.group_id)
+        value = self._task_identifier(worker_task)
+
         pipe = self._redis_client.pipeline()
-        pipe.sadd(name, worker_task.id)\
+        pipe.sadd(name, value)\
             .expire(name, settings.REDIS_EXPIRY)\
             .execute()
 
@@ -31,7 +40,9 @@ class RedisGroupClient(GroupClient):
         :return: True if last task in group
         """
         name = self._key_name(worker_task.group_id)
-        if self._redis_client.srem(name, worker_task.id) > 0:
+        value = self._task_identifier(worker_task)
+
+        if self._redis_client.srem(name, value) > 0:
             return self._redis_client.scard(name) == 0
         else:
             return False

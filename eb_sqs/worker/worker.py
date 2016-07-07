@@ -73,7 +73,7 @@ class Worker(object):
     def delay(self, group_id, queue_name, func, args, kwargs, max_retries, use_pickle, delay, execute_inline):
         # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
         id = unicode(uuid.uuid4())
-        worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, use_pickle)
+        worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, None, use_pickle)
         return self._enqueue_task(worker_task, delay, execute_inline, False, True)
 
     def retry(self, worker_task, delay, execute_inline, count_retries):
@@ -87,9 +87,9 @@ class Worker(object):
                 if count_retries:
                     worker_task.retry += 1
                     if worker_task.retry > worker_task.max_retries:
-                        self._remove_from_group(worker_task)
                         raise MaxRetriesReachedException(worker_task.retry)
                 worker_task.retry_scheduled = True
+                worker_task.retry_id = unicode(uuid.uuid4())
 
             self._add_to_group(worker_task)
 
@@ -111,6 +111,7 @@ class Worker(object):
                 self.queue_client.add_message(worker_task.queue, worker_task.serialize(), delay)
                 return None
         except MaxRetriesReachedException:
+            self._remove_from_group(worker_task)
             raise
         except QueueDoesNotExistException as ex:
             self._remove_from_group(worker_task)
@@ -140,9 +141,10 @@ class Worker(object):
         # type: (WorkerTask) -> None
         if worker_task.group_id and not worker_task.retry_scheduled:
             logger.debug(
-                'Add task %s (%s) to group %s',
+                'Add task %s (%s, retry-id: %s) to group %s',
                 worker_task.abs_func_name,
                 worker_task.id,
+                worker_task.retry_id,
                 worker_task.group_id,
             )
 
@@ -152,9 +154,10 @@ class Worker(object):
         # type: (WorkerTask) -> None
         if worker_task.group_id and not worker_task.retry_scheduled:
             logger.debug(
-                'Remove task %s (%s) from group %s',
+                'Remove task %s (%s, retry-id: %s) from group %s',
                 worker_task.abs_func_name,
                 worker_task.id,
+                worker_task.retry_id,
                 worker_task.group_id,
             )
 

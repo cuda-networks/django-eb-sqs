@@ -11,8 +11,8 @@ except:
 
 
 class WorkerTask(object):
-    def __init__(self, id, group_id, queue, func, args, kwargs, max_retries, retry, use_pickle):
-        # type: (unicode, unicode, unicode, Any, tuple, dict, int, int, bool) -> None
+    def __init__(self, id, group_id, queue, func, args, kwargs, max_retries, retry, retry_id, use_pickle):
+        # type: (unicode, unicode, unicode, Any, tuple, dict, int, int, unicode, bool) -> None
         super(WorkerTask, self).__init__()
         self.id = id
         self.group_id = group_id
@@ -22,6 +22,7 @@ class WorkerTask(object):
         self.kwargs = kwargs
         self.max_retries = max_retries
         self.retry = retry
+        self.retry_id = retry_id
         self.use_pickle = use_pickle
 
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
@@ -48,6 +49,7 @@ class WorkerTask(object):
                 'kwargs': kwargs,
                 'maxRetries': self.max_retries,
                 'retry': self.retry,
+                'retryId': self.retry_id,
                 'pickle': self.use_pickle,
             }
 
@@ -79,8 +81,9 @@ class WorkerTask(object):
         kwargs = WorkerTask._unpickle_args(task['kwargs']) if use_pickle else task['kwargs']
         max_retries = task['maxRetries']
         retry = task['retry']
+        retry_id = task.get('retryId')
 
-        return WorkerTask(id, group_id, queue, func, args, kwargs, max_retries, retry, use_pickle)
+        return WorkerTask(id, group_id, queue, func, args, kwargs, max_retries, retry, retry_id, use_pickle)
 
     @staticmethod
     def _unpickle_args(args):

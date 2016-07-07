@@ -113,11 +113,13 @@ class WorkerTest(TestCase):
         settings.GROUP_CALLBACK_TASK = Mock()
 
         group_set = set()
-        self.group_mock.add.side_effect = lambda task: group_set.add(task.id)
-        self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(task.id) is None else False
+        self.group_mock.add.side_effect = lambda task: group_set.add('{}-{}'.format(task.id, task.retry_id))
+        self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(
+            '{}-{}'.format(task.id, task.retry_id)) is None else False
 
         repeating_group_task.delay(3, group_id='group-id', execute_inline=True)
 
+        self.assertEqual(len(group_set), 0)
         settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
 
         settings.GROUP_CALLBACK_TASK = None
@@ -126,30 +128,34 @@ class WorkerTest(TestCase):
         settings.GROUP_CALLBACK_TASK = Mock()
 
         group_set = set()
-        self.group_mock.add.side_effect = lambda task: group_set.add(task.id)
+        self.group_mock.add.side_effect = lambda task: group_set.add('{}-{}'.format(task.id, task.retry_id))
         self.group_mock.remove.side_effect = lambda task: len(group_set) == 0 if group_set.discard(
-            task.id) is None else False
+            '{}-{}'.format(task.id, task.retry_id)) is None else False
 
         with self.assertRaises(MaxRetriesReachedException):
             max_retries_group_task.delay(group_id='group-id', execute_inline=True)
 
+        self.assertEqual(len(group_set), 0)
         settings.GROUP_CALLBACK_TASK.delay.assert_called_once()
 
         settings.GROUP_CALLBACK_TASK = None
 
     def test_retry_execution(self):
-        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, False)
+        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 5, 0, None, False)
         self.assertEqual(dummy_task.retry_num, 0)
 
         self.worker.retry(task, 0, False, True)
 
         self.queue_mock.add_message.assert_called_once()
+        self.assertEqual(task.id, 'id')
+        self.assertEqual(task.retry, 1)
+        self.assertIsNotNone(task.retry_id)
 
     def test_retry_max_reached_execution(self):
         dummy_task.retry_num = 0
 
         with self.assertRaises(MaxRetriesReachedException):
-            task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, False)
+            task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, None, False)
             self.assertEqual(dummy_task.retry_num, 0)
 
             self.worker.retry(task, 0, True, True)
@@ -163,7 +169,7 @@ class WorkerTest(TestCase):
     def test_retry_no_limit(self):
         dummy_task.retry_num = 0
 
-        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, False)
+        task = WorkerTask('id', None, 'queue', dummy_task, [], {'msg': 'Hello World!'}, 2, 0, None, False)
         self.assertEqual(dummy_task.retry_num, 0)
 
         self.worker.retry(task, 0, True, False)

@@ -18,10 +18,10 @@ def dummy_function():
 
 class WorkerTaskTest(TestCase):
     def setUp(self):
-        self.dummy_msg = '{"queue": "default", "retry": 0, "func": "eb_sqs.tests.worker.tests_worker_task.dummy_function", "kwargs": {}, "maxRetries": 5, "args": [], "pickle": false, "id": "id-1", "groupId": "group-5"}'
+        self.dummy_msg = '{"queue": "default", "retryId": "retry-uuid", "retry": 0, "func": "eb_sqs.tests.worker.tests_worker_task.dummy_function", "kwargs": {}, "maxRetries": 5, "args": [], "pickle": false, "id": "id-1", "groupId": "group-5"}'
 
     def test_serialize_worker_task(self):
-        worker_task = WorkerTask('id-1', 'group-5', 'default', dummy_function, [], {}, 5, 0, False)
+        worker_task = WorkerTask('id-1', 'group-5', 'default', dummy_function, [], {}, 5, 0, 'retry-uuid', False)
         msg = worker_task.serialize()
 
         self.assertEqual(msg, self.dummy_msg)
@@ -37,9 +37,10 @@ class WorkerTaskTest(TestCase):
         self.assertEqual(worker_task.kwargs, {})
         self.assertEqual(worker_task.max_retries, 5)
         self.assertEqual(worker_task.retry, 0)
+        self.assertEqual(worker_task.retry_id, 'retry-uuid')
 
     def test_serialize_pickle(self):
-        worker_task1 = WorkerTask('id-1', None, 'default', dummy_function, [], {'object': TestObject()}, 5, 0, True)
+        worker_task1 = WorkerTask('id-1', None, 'default', dummy_function, [], {'object': TestObject()}, 5, 0, None, True)
         msg = worker_task1.serialize()
 
         worker_task2 = WorkerTask.deserialize(msg)
