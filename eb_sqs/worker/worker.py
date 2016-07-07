@@ -37,7 +37,7 @@ class Worker(object):
         try:
             if settings.DEAD_LETTER_MODE:
                 # If in dead letter mode only try to run callback. Do not execute task.
-                logger.info(
+                logger.debug(
                     'Task %s (%s) not executed (dead letter queue)',
                     worker_task.abs_func_name,
                     worker_task.id,
@@ -45,7 +45,7 @@ class Worker(object):
 
                 self._remove_from_group(worker_task)
             else:
-                logger.info(
+                logger.debug(
                     'Execute task %s (%s) with args: %s and kwargs: %s',
                     worker_task.abs_func_name,
                     worker_task.id,
@@ -93,7 +93,7 @@ class Worker(object):
 
             self._add_to_group(worker_task)
 
-            logger.info('%s task %s (%s): %s, %s (%s%s)',
+            logger.debug('%s task %s (%s): %s, %s (%s%s)',
                         'Retrying' if is_retry else 'Delaying',
                         worker_task.abs_func_name,
                         worker_task.id,
@@ -139,7 +139,7 @@ class Worker(object):
     def _add_to_group(self, worker_task):
         # type: (WorkerTask) -> None
         if worker_task.group_id and not worker_task.retry_scheduled:
-            logger.info(
+            logger.debug(
                 'Add task %s (%s) to group %s',
                 worker_task.abs_func_name,
                 worker_task.id,
@@ -151,7 +151,7 @@ class Worker(object):
     def _remove_from_group(self, worker_task):
         # type: (WorkerTask) -> None
         if worker_task.group_id and not worker_task.retry_scheduled:
-            logger.info(
+            logger.debug(
                 'Remove task %s (%s) from group %s',
                 worker_task.abs_func_name,
                 worker_task.id,
@@ -173,7 +173,7 @@ class Worker(object):
 
                 callback = getattr(func_module, func_name)
 
-            logger.info(
+            logger.debug(
                 'All tasks in group %s finished. Trigger callback %s',
                 worker_task.group_id,
                 '{}.{}'.format(callback.__module__, callback.func_name),
