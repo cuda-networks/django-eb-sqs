@@ -81,18 +81,17 @@ class Worker(object):
 
     def retry(self, worker_task, delay, execute_inline, count_retries):
         # type: (WorkerTask, int, bool, bool) -> Any
+        worker_task = worker_task.copy(settings.FORCE_SERIALIZATION)
+        worker_task.retry_id = unicode(uuid.uuid4())
         return self._enqueue_task(worker_task, delay, execute_inline, True, count_retries)
 
     def _enqueue_task(self, worker_task, delay, execute_inline, is_retry, count_retries):
         # type: (WorkerTask, int, bool, bool, bool) -> Any
         try:
-            if is_retry:
-                if count_retries:
-                    worker_task.retry += 1
-                    if worker_task.retry > worker_task.max_retries:
-                        raise MaxRetriesReachedException(worker_task.retry)
-                worker_task.retry_scheduled = True
-                worker_task.retry_id = unicode(uuid.uuid4())
+            if is_retry and count_retries:
+                worker_task.retry += 1
+                if worker_task.retry >= worker_task.max_retries:
+                    raise MaxRetriesReachedException(worker_task.retry)
 
             self._add_to_group(worker_task)
 
@@ -107,22 +106,15 @@ class Worker(object):
                         ', inline' if execute_inline else '')
 
             if execute_inline:
-                if settings.FORCE_SERIALIZATION:
-                    return self._execute_task(WorkerTask.deserialize(worker_task.serialize()))
-                else:
-                    return self._execute_task(worker_task)
+                return self._execute_task(worker_task)
             else:
                 self.queue_client.add_message(worker_task.queue, worker_task.serialize(), delay)
                 return None
-        except MaxRetriesReachedException:
-            self._remove_from_group(worker_task)
-            raise
         except QueueDoesNotExistException as ex:
             self._remove_from_group(worker_task)
             raise InvalidQueueException(ex.queue_name)
         except QueueClientException as ex:
             self._remove_from_group(worker_task)
-
             logger.exception('Task %s (%s, retry-id: %s) failed to enqueue to %s: %s',
                         worker_task.abs_func_name,
                         worker_task.id,
@@ -131,20 +123,18 @@ class Worker(object):
                         ex)
 
             raise QueueException()
-        except Exception:
-            self._remove_from_group(worker_task)
-            raise
 
     def _execute_task(self, worker_task):
         # type: (WorkerTask) -> Any
-        worker_task.retry_scheduled = False
-        result = worker_task.execute()
-        self._remove_from_group(worker_task)
-        return result
+        try:
+            result = worker_task.execute()
+            return result
+        finally:
+            self._remove_from_group(worker_task)
 
     def _add_to_group(self, worker_task):
         # type: (WorkerTask) -> None
-        if worker_task.group_id and not worker_task.retry_scheduled:
+        if worker_task.group_id:
             logger.debug(
                 'Add task %s (%s, retry-id: %s) to group %s',
                 worker_task.abs_func_name,
@@ -157,7 +147,7 @@ class Worker(object):
 
     def _remove_from_group(self, worker_task):
         # type: (WorkerTask) -> None
-        if worker_task.group_id and not worker_task.retry_scheduled:
+        if worker_task.group_id:
             logger.debug(
                 'Remove task %s (%s, retry-id: %s) from group %s',
                 worker_task.abs_func_name,

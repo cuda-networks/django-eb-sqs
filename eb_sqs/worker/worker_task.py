@@ -26,7 +26,6 @@ class WorkerTask(object):
         self.use_pickle = use_pickle
 
         self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
-        self.retry_scheduled = False
 
     def execute(self):
         # type: () -> Any
@@ -54,6 +53,24 @@ class WorkerTask(object):
             }
 
         return json.dumps(task)
+
+    def copy(self, use_serialization):
+        # type: (bool) -> WorkerTask
+        if use_serialization:
+            return WorkerTask.deserialize(self.serialize())
+        else:
+            return WorkerTask(
+                self.id,
+                self.group_id,
+                self.queue,
+                self.func,
+                self.args,
+                self.kwargs,
+                self.max_retries,
+                self.retry,
+                self.retry_id,
+                self.use_pickle,
+            )
 
     @staticmethod
     def _pickle_args(args):
