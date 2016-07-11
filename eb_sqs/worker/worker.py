@@ -38,17 +38,19 @@ class Worker(object):
             if settings.DEAD_LETTER_MODE:
                 # If in dead letter mode only try to run callback. Do not execute task.
                 logger.debug(
-                    'Task %s (%s) not executed (dead letter queue)',
+                    'Task %s (%s, retry-id: %s) not executed (dead letter queue)',
                     worker_task.abs_func_name,
                     worker_task.id,
+                    worker_task.retry_id,
                 )
 
                 self._remove_from_group(worker_task)
             else:
                 logger.debug(
-                    'Execute task %s (%s) with args: %s and kwargs: %s',
+                    'Execute task %s (%s, retry-id: %s) with args: %s and kwargs: %s',
                     worker_task.abs_func_name,
                     worker_task.id,
+                    worker_task.retry_id,
                     worker_task.args,
                     worker_task.kwargs
                 )
@@ -60,9 +62,10 @@ class Worker(object):
             raise
         except Exception as ex:
             logger.exception(
-                'Task %s (%s) failed to execute with args: %s and kwargs: %s: %s',
+                'Task %s (%s, retry-id: %s) failed to execute with args: %s and kwargs: %s: %s',
                 worker_task.abs_func_name,
                 worker_task.id,
+                worker_task.retry_id,
                 worker_task.args,
                 worker_task.kwargs,
                 ex
@@ -93,10 +96,11 @@ class Worker(object):
 
             self._add_to_group(worker_task)
 
-            logger.debug('%s task %s (%s): %s, %s (%s%s)',
+            logger.debug('%s task %s (%s, retry-id: %s): %s, %s (%s%s)',
                         'Retrying' if is_retry else 'Delaying',
                         worker_task.abs_func_name,
                         worker_task.id,
+                        worker_task.retry_id,
                         worker_task.args,
                         worker_task.kwargs,
                         worker_task.queue,
@@ -119,9 +123,10 @@ class Worker(object):
         except QueueClientException as ex:
             self._remove_from_group(worker_task)
 
-            logger.exception('Task %s (%s) failed to enqueue to %s: %s',
+            logger.exception('Task %s (%s, retry-id: %s) failed to enqueue to %s: %s',
                         worker_task.abs_func_name,
                         worker_task.id,
+                        worker_task.retry_id,
                         worker_task.queue,
                         ex)
 
