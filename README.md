@@ -23,7 +23,7 @@ Adding a task to a queue is simple.
 ```python
 from eb_sqs.decorators import task
 
-@task(queue='test')
+@task(queue_name='test')
 def echo(message):
     print message
 
@@ -54,7 +54,7 @@ Failed tasks can be retried by using the `retry` method. See the following examp
 ```python
 from eb_sqs.decorators import task
 
-@task(queue='test', max_retries=5)
+@task(queue_name='test', max_retries=5)
 def upload_file(message):
     print '# of retries: {}'.format(upload_file.retry_num)
     try:
@@ -110,7 +110,7 @@ Example callback which is executed when all three tasks are finished:
 ```python
 from eb_sqs.decorators import task
 
-@task(queue='test', max_retries=5)
+@task(queue_name='test', max_retries=5)
 def group_finished(group_id):
     pass
 ```
