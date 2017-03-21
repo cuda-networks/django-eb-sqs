@@ -28,7 +28,6 @@ class Command(BaseCommand):
 
         try:
             logger.debug('Connect to SQS')
-            self.stdout.write('Connected')
 
             sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
             queues = [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
@@ -36,7 +35,6 @@ class Command(BaseCommand):
             logger.debug('Connected to SQS')
 
             while True:
-                self.stdout.write('.')
                 for queue in queues:
                     messages = queue.receive_messages(
                         MaxNumberOfMessages=10,
@@ -44,13 +42,11 @@ class Command(BaseCommand):
                     )
 
                     for msg in messages:
-                        self.stdout.write('Read message {}'.format(msg.message_id))
                         logger.debug('Read message {}'.format(msg.message_id))
                         self._process_message(msg)
                         logger.debug('Processed message {}'.format(msg.message_id))
                         msg.delete()
                         logger.debug('Deleted message {}'.format(msg.message_id))
-                        self.stdout.write('Deleted message {}'.format(msg.message_id))
 
         except ConnectionError:
             pass
