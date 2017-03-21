@@ -30,7 +30,7 @@ class Command(BaseCommand):
         sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
         queues = [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
-        logger.debug('Connected to SQS')
+        logger.debug('Connected to SQS: {}'.format(', '.join(queue_names)))
 
         while True:
             for queue in queues:
