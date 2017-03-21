@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
 
+AWS_REGION = getattr(settings, 'AWS_REGION', 'us-east-1')  # type: unicode
+
 AUTO_ADD_QUEUE = getattr(settings, 'EB_SQS_AUTO_ADD_QUEUE', True) # type: bool
 QUEUE_PREFIX = getattr(settings, 'EB_SQS_QUEUE_PREFIX', 'eb-sqs-') # type: unicode
 DEFAULT_QUEUE = getattr(settings, 'EB_SQS_DEFAULT_QUEUE', 'default') # type: unicode
