@@ -4,6 +4,9 @@ from django.conf import settings
 
 AWS_REGION = getattr(settings, 'AWS_REGION', 'us-east-1')  # type: unicode
 
+MAX_NUMBER_OF_MESSAGES = getattr(settings, 'EB_SQS_MAX_NUMBER_OF_MESSAGES', 10)
+WAIT_TIME_S = getattr(settings, 'EB_SQS_WAIT_TIME_S', 2)
+
 AUTO_ADD_QUEUE = getattr(settings, 'EB_SQS_AUTO_ADD_QUEUE', True) # type: bool
 QUEUE_PREFIX = getattr(settings, 'EB_SQS_QUEUE_PREFIX', 'eb-sqs-') # type: unicode
 DEFAULT_QUEUE = getattr(settings, 'EB_SQS_DEFAULT_QUEUE', 'default') # type: unicode

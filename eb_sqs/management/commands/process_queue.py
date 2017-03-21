@@ -4,7 +4,6 @@ import boto3
 import logging
 
 from django.core.management import BaseCommand, CommandError
-from requests.exceptions import ConnectionError
 
 from eb_sqs import settings
 from eb_sqs.worker.worker_factory import WorkerFactory
@@ -26,30 +25,26 @@ class Command(BaseCommand):
 
         queue_names = options['queue_names'].split(',')
 
-        try:
-            logger.debug('Connect to SQS')
+        logger.debug('Connecting to SQS: {}'.format(', '.join(queue_names)))
 
-            sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
-            queues = [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
+        sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
+        queues = [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
-            logger.debug('Connected to SQS')
+        logger.debug('Connected to SQS')
 
-            while True:
-                for queue in queues:
-                    messages = queue.receive_messages(
-                        MaxNumberOfMessages=10,
-                        WaitTimeSeconds=2
-                    )
+        while True:
+            for queue in queues:
+                messages = queue.receive_messages(
+                    MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
+                    WaitTimeSeconds=settings.WAIT_TIME_S,
+                )
 
-                    for msg in messages:
-                        logger.debug('Read message {}'.format(msg.message_id))
-                        self._process_message(msg)
-                        logger.debug('Processed message {}'.format(msg.message_id))
-                        msg.delete()
-                        logger.debug('Deleted message {}'.format(msg.message_id))
-
-        except ConnectionError:
-            pass
+                for msg in messages:
+                    logger.debug('Read message {}'.format(msg.message_id))
+                    self._process_message(msg)
+                    logger.debug('Processed message {}'.format(msg.message_id))
+                    msg.delete()
+                    logger.debug('Deleted message {}'.format(msg.message_id))
 
     def _process_message(self, message):
         # type: (Message) -> None
