@@ -24,7 +24,7 @@ class Command(BaseCommand):
         if not options['queue_names']:
             raise CommandError('Queue names (--queues) not specified')
 
-        queue_names = [queue_name.trim() for queue_name in options['queue_names'].split(',')]
+        queue_names = [queue_name.rstrip() for queue_name in options['queue_names'].split(',')]
 
         logger.debug('[django-eb-sqs] Connecting to SQS: {}'.format(', '.join(queue_names)))
 
