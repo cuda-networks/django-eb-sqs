@@ -4,7 +4,7 @@ django-eb-sqs is a simple task manager for the Elastic Beanstalk Worker Tier. It
 
 ### Installation
 
-Install the module with `pip install django-eb-sqs` or add it to your `requirements.txt`.
+Install the module with `pip install git+git://github.com/cuda-networks/django-eb-sqs.git` or add it to your `requirements.txt`.
 
 Don't forget to add django-eb-sqs app to your Django `INSTALLED_APPS` settings:
 ```python
@@ -94,6 +94,17 @@ For example:
 python manage.py run_eb_sqs_worker --url http://127.0.0.1:80/worker/process --queue default
 ```
 
+#### Executing Tasks without Elastic Beanstalk
+
+Another way of executing tasks is to use the Django command `process_queue`.
+This command can work with one or more queues, reading from the queues infinitely and executing tasks as they come-in.
+
+```bash
+python manage.py process_queue --queues <comma-delimited list of queue names>
+```
+
+This is a good idea for someone who wants to execute tasks without an Elastic Beanstalk worker.
+
 
 #### Group Tasks
 Multiple tasks can be grouped by specifing the `group_id` argument when calling `delay` on a task.
@@ -119,6 +130,9 @@ def group_finished(group_id):
 
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
 
+- EB_AWS_REGION (`us-east-1`): The AWS region to use when working with SQS.
+- EB_SQS_MAX_NUMBER_OF_MESSAGES (`10`): The maximum number of messages to read in a single call from SQS (<= 10).
+- EB_SQS_WAIT_TIME_S (`2`): The time to wait (seconds) when receiving messages from SQS.
 - EB_SQS_AUTO_ADD_QUEUE (`True`): If queues should be added automatically to AWS if they don't exist.
 - EB_SQS_DEAD_LETTER_MODE (`False`): Enable if this worker is handling the SQS dead letter queue. Tasks won't be executed but group callback is.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
