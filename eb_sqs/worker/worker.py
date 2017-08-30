@@ -75,14 +75,13 @@ class Worker(object):
 
     def delay(self, group_id, queue_name, func, args, kwargs, max_retries, use_pickle, delay, execute_inline):
         # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
-        id = unicode(uuid.uuid4())
-        worker_task = WorkerTask(id, group_id, queue_name, func, args, kwargs, max_retries, 0, None, use_pickle)
+        worker_task = WorkerTask(str(uuid.uuid4()), group_id, queue_name, func, args, kwargs, max_retries, 0, None, use_pickle)
         return self._enqueue_task(worker_task, delay, execute_inline, False, True)
 
     def retry(self, worker_task, delay, execute_inline, count_retries):
         # type: (WorkerTask, int, bool, bool) -> Any
         worker_task = worker_task.copy(settings.FORCE_SERIALIZATION)
-        worker_task.retry_id = unicode(uuid.uuid4())
+        worker_task.retry_id = str(uuid.uuid4())
         return self._enqueue_task(worker_task, delay, execute_inline, True, count_retries)
 
     def _enqueue_task(self, worker_task, delay, execute_inline, is_retry, count_retries):

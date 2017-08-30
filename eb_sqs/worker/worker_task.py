@@ -12,7 +12,7 @@ except:
 
 class WorkerTask(object):
     def __init__(self, id, group_id, queue, func, args, kwargs, max_retries, retry, retry_id, use_pickle):
-        # type: (unicode, unicode, unicode, Any, tuple, dict, int, int, unicode, bool) -> None
+        # type: (str, unicode, unicode, Any, tuple, dict, int, int, unicode, bool) -> None
         super(WorkerTask, self).__init__()
         self.id = id
         self.group_id = group_id
