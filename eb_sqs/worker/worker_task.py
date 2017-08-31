@@ -25,7 +25,7 @@ class WorkerTask(object):
         self.retry_id = retry_id
         self.use_pickle = use_pickle
 
-        self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.func_name)
+        self.abs_func_name = '{}.{}'.format(self.func.__module__, self.func.__name__)
 
     def execute(self):
         # type: () -> Any
