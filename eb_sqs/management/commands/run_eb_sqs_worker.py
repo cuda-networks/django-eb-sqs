@@ -1,6 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import boto3
+from botocore.config import Config
+from django.conf import settings
 from django.core.management import BaseCommand, CommandError
 import requests
 from requests.exceptions import ConnectionError
@@ -36,7 +38,11 @@ class Command(BaseCommand):
 
         try:
             self.stdout.write('Connect to SQS')
-            sqs = boto3.resource("sqs")
+            sqs = boto3.resource(
+                'sqs',
+                region_name=settings.AWS_REGION,
+                config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
+            )
             queue = sqs.get_queue_by_name(QueueName=queue_name)
             self.stdout.write('> Connected')
 

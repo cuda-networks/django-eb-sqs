@@ -4,6 +4,8 @@ import importlib
 import logging
 import uuid
 
+from six import string_types
+
 from eb_sqs import settings
 from eb_sqs.worker.group_client import GroupClient
 from eb_sqs.worker.queue_client import QueueDoesNotExistException, QueueClient, QueueClientException
@@ -163,7 +165,7 @@ class Worker(object):
         if settings.GROUP_CALLBACK_TASK:
             callback = settings.GROUP_CALLBACK_TASK
 
-            if isinstance(callback, basestring):
+            if isinstance(callback, string_types):
                 func_name = callback.split(".")[-1]
                 func_path = ".".join(callback.split(".")[:-1])
                 func_module = importlib.import_module(func_path)

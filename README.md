@@ -133,7 +133,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_AWS_REGION (`us-east-1`): The AWS region to use when working with SQS.
 - EB_SQS_MAX_NUMBER_OF_MESSAGES (`10`): The maximum number of messages to read in a single call from SQS (<= 10).
 - EB_SQS_WAIT_TIME_S (`2`): The time to wait (seconds) when receiving messages from SQS.
-- EB_SQS_AUTO_ADD_QUEUE (`True`): If queues should be added automatically to AWS if they don't exist.
+- EB_SQS_AUTO_ADD_QUEUE (`False`): If queues should be added automatically to AWS if they don't exist.
 - EB_SQS_DEAD_LETTER_MODE (`False`): Enable if this worker is handling the SQS dead letter queue. Tasks won't be executed but group callback is.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
@@ -147,6 +147,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed
 - EB_SQS_REDIS_KEY_PREFIX (`eb-sqs-`): Prefix used for all Redis keys
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
+- EB_SQS_AWS_MAX_RETRIES (`10`): Default retry limit on a boto3 call to AWS SQS.
 
 
 ### Development
@@ -158,5 +159,5 @@ Make sure to install the development dependencies from `development.txt`.
 The build in tests can be executed with the Django test runner.
 
 ```bash
-django-admin test --settings=eb_sqs.test_settings
+python -m django test --settings=eb_sqs.test_settings
 ```

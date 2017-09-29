@@ -14,7 +14,7 @@ setup(
     long_description=README,
     url='https://github.com/cuda-networks/django-eb-sqs',
     install_requires=[
-        'boto3>=1.3.1',
+        'boto3>=1.4.7',
         'Django>=1.7',
         'redis>=2.10',
         'requests>=2',
