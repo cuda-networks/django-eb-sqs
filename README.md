@@ -147,7 +147,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed
 - EB_SQS_REDIS_KEY_PREFIX (`eb-sqs-`): Prefix used for all Redis keys
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
-- EB_SQS_AWS_MAX_RETRIES (`10`): Default retry limit on a boto3 call to AWS SQS.
+- EB_SQS_AWS_MAX_RETRIES (`30`): Default retry limit on a boto3 call to AWS SQS.
 
 
 ### Development
