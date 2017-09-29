@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import boto3
 import logging
 
+from botocore.config import Config
 from django.core.management import BaseCommand, CommandError
 
 from eb_sqs import settings
@@ -28,7 +29,11 @@ class Command(BaseCommand):
 
         logger.debug('[django-eb-sqs] Connecting to SQS: {}'.format(', '.join(queue_names)))
 
-        sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
+        sqs = boto3.resource(
+            'sqs',
+            region_name=settings.AWS_REGION,
+            config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
+        )
         queues = [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
         logger.debug('[django-eb-sqs] Connected to SQS: {}'.format(', '.join(queue_names)))

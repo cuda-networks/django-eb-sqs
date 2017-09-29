@@ -75,7 +75,7 @@ class WorkerTask(object):
     @staticmethod
     def _pickle_args(args):
         # type: (dict) -> unicode
-        return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL))
+        return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL)).decode('utf-8')
 
     @staticmethod
     def deserialize(msg):
@@ -105,4 +105,4 @@ class WorkerTask(object):
     @staticmethod
     def _unpickle_args(args):
         # type: (unicode) -> dict
-        return pickle.loads(base64.b64decode(args))
+        return pickle.loads(base64.b64decode(args.encode('utf-8')))

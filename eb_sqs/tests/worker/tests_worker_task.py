@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 from unittest import TestCase
 
 from eb_sqs.worker.worker_task import WorkerTask
@@ -24,7 +25,7 @@ class WorkerTaskTest(TestCase):
         worker_task = WorkerTask('id-1', 'group-5', 'default', dummy_function, [], {}, 5, 0, 'retry-uuid', False)
         msg = worker_task.serialize()
 
-        self.assertEqual(msg, self.dummy_msg)
+        self.assertDictEqual(json.loads(msg), json.loads(self.dummy_msg))
 
     def test_deserialize_worker_task(self):
         worker_task = WorkerTask.deserialize(self.dummy_msg)
