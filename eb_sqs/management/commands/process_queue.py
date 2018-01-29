@@ -40,7 +40,7 @@ class Command(BaseCommand):
             config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
         )
 
-        prefixes = list(filter(lambda qn: qn.startsWith(self.PREFIX_STR), queue_names))
+        prefixes = list(filter(lambda qn: qn.startswith(self.PREFIX_STR), queue_names))
         queues = self._get_queues_by_names(sqs, list(set(queue_names) - set(prefixes)))
 
         queue_prefixes = [prefix.split(self.PREFIX_STR)[1] for prefix in prefixes]
