@@ -105,6 +105,13 @@ python manage.py process_queue --queues <comma-delimited list of queue names>
 
 This is a good idea for someone who wants to execute tasks without an Elastic Beanstalk worker.
 
+You can either use full queue names, or queue prefix using `prefix:*my_example_prefix*` notation.
+
+Examples:
+```bash
+python manage.py process_queue --queues queue1,queue2 # process queue1 and queue2
+python manage.py process_queue --queues queue1,prefix:pr1-,queue2 # process queue1, queue2 and any queue whose name starts with 'pr1-'
+```
 
 #### Group Tasks
 Multiple tasks can be grouped by specifing the `group_id` argument when calling `delay` on a task.
@@ -148,6 +155,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_REDIS_KEY_PREFIX (`eb-sqs-`): Prefix used for all Redis keys
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
 - EB_SQS_AWS_MAX_RETRIES (`30`): Default retry limit on a boto3 call to AWS SQS.
+- EB_SQS_REFRESH_PREFIX_QUEUES_S (`10`): Minimal number of seconds to wait between refreshing queue list, in case prefix is used
 
 
 ### Development

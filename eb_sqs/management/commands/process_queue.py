@@ -56,7 +56,7 @@ class Command(BaseCommand):
                     timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S) > last_update_time:
                 queues = static_queues + self._get_queues_by_prefixes(sqs, queue_prefixes)
                 last_update_time = timezone.now()
-                logger.debug('[django-eb-sqs] Updated SQS queues: {}'.format(
+                logger.info('[django-eb-sqs] Updated SQS queues: {}'.format(
                     ', '.join([queue.url for queue in queues])
                 ))
 
