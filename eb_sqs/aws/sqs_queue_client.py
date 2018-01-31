@@ -45,8 +45,8 @@ class SqsQueueClient(QueueClient):
             queue = self.sqs.create_queue(
                 QueueName=queue_name,
                 Attributes={
-                    'MessageRetentionPeriod': '1209600',
-                    'VisibilityTimeout': '300'
+                    'MessageRetentionPeriod': settings.QUEUE_MESSAGE_RETENTION,
+                    'VisibilityTimeout': settings.QUEUE_VISIBILITY_TIMEOUT
                 }
             )
             self.queue_cache[queue_name] = queue

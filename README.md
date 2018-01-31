@@ -25,7 +25,7 @@ from eb_sqs.decorators import task
 
 @task(queue_name='test')
 def echo(message):
-    print message
+    print(message)
 
 echo.delay(message='Hello World!')
 ```
@@ -56,10 +56,10 @@ from eb_sqs.decorators import task
 
 @task(queue_name='test', max_retries=5)
 def upload_file(message):
-    print '# of retries: {}'.format(upload_file.retry_num)
+    print('# of retries: {}'.format(upload_file.retry_num))
     try:
         # upload ...
-    expect ConnectionException:
+    except ConnectionException:
         upload_file.retry()
 ```
 
@@ -69,7 +69,7 @@ The retry call supports the `delay` and `execute_inline` arguments in order to d
 
 #### Executing Tasks
 
-The Elastic Beanstalk Worker Tier sends all tasks to a API endpoint. django-eb-sqs has already such an endpoint which can be used by specifing the url mapping in your `urls.py` file.
+The Elastic Beanstalk Worker Tier sends all tasks to a API endpoint. django-eb-sqs has already such an endpoint which can be used by specifying the url mapping in your `urls.py` file.
 
 ```python
 urlpatterns = [
@@ -114,7 +114,7 @@ python manage.py process_queue --queues queue1,prefix:pr1-,queue2 # process queu
 ```
 
 #### Group Tasks
-Multiple tasks can be grouped by specifing the `group_id` argument when calling `delay` on a task.
+Multiple tasks can be grouped by specifying the `group_id` argument when calling `delay` on a task.
 If all tasks of a specific group are executed then the group callback task specified by `EB_SQS_GROUP_CALLBACK_TASK` is executed.
 
 Example calls:
@@ -141,6 +141,8 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_MAX_NUMBER_OF_MESSAGES (`10`): The maximum number of messages to read in a single call from SQS (<= 10).
 - EB_SQS_WAIT_TIME_S (`2`): The time to wait (seconds) when receiving messages from SQS.
 - EB_SQS_AUTO_ADD_QUEUE (`False`): If queues should be added automatically to AWS if they don't exist.
+- EB_SQS_QUEUE_MESSAGE_RETENTION (`1209600`): The value (in seconds) to be passed to MessageRetentionPeriod parameter, when creating a queue (only relevant in case EB_SQS_AUTO_ADD_QUEUE is set to True).
+- EB_SQS_QUEUE_VISIBILITY_TIMEOUT (`300`): The value (in seconds) to be passed to VisibilityTimeout parameter, when creating a queue (only relevant in case EB_SQS_AUTO_ADD_QUEUE is set to True).
 - EB_SQS_DEAD_LETTER_MODE (`False`): Enable if this worker is handling the SQS dead letter queue. Tasks won't be executed but group callback is.
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
