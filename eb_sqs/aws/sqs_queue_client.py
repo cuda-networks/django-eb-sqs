@@ -42,7 +42,13 @@ class SqsQueueClient(QueueClient):
     def _add_sqs_queue(self, queue_name):
         # type: (unicode) -> Any
         if settings.AUTO_ADD_QUEUE:
-            queue = self.sqs.create_queue(QueueName=queue_name)
+            queue = self.sqs.create_queue(
+                QueueName=queue_name,
+                Attributes={
+                    'MessageRetentionPeriod': settings.QUEUE_MESSAGE_RETENTION,
+                    'VisibilityTimeout': settings.QUEUE_VISIBILITY_TIMEOUT
+                }
+            )
             self.queue_cache[queue_name] = queue
             return queue
         else:
