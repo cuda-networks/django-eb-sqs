@@ -56,6 +56,7 @@ class WorkerService(object):
                     ', '.join([queue.url for queue in queues])
                 ))
 
+            logger.debug('[django-eb-sqs] Processing {} queues'.format(len(queues)))
             self.process_messages(queues, worker)
 
     def process_messages(self, queues, worker):
@@ -63,6 +64,7 @@ class WorkerService(object):
         for queue in queues:
             try:
                 messages = self.poll_messages(queue)
+                logger.debug('[django-eb-sqs] Polled {} messages'.format(len(messages)))
 
                 for msg in messages:
                     self.process_message(msg, worker)
@@ -80,7 +82,7 @@ class WorkerService(object):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
-            worker.execute(msg.body)
+            # worker.execute(msg.body)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
