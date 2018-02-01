@@ -97,7 +97,7 @@ class WorkerService(object):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
-            # worker.execute(msg.body)
+            worker.execute(msg.body)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
