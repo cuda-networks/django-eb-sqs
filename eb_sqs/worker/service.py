@@ -19,6 +19,7 @@ class WorkerService(object):
     PREFIX_STR = 'prefix:'
 
     def process_queues(self, queue_names):
+        # type: (list) -> None
         logger.debug('[django-eb-sqs] Connecting to SQS: {}'.format(', '.join(queue_names)))
 
         sqs = boto3.resource(
@@ -58,6 +59,7 @@ class WorkerService(object):
             self.process_messages(queues, worker)
 
     def process_messages(self, queues, worker):
+        # type: (list, Worker) -> None
         for queue in queues:
             try:
                 messages = self.poll_messages(queue)
@@ -68,13 +70,14 @@ class WorkerService(object):
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
 
     def poll_messages(self, queue):
+        # type: (Queue) -> list
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
         )
 
     def process_message(self, msg, worker):
-        # type: (Any, Worker) -> None
+        # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
             worker.execute(msg.body)
@@ -86,9 +89,11 @@ class WorkerService(object):
             logger.debug('[django-eb-sqs] Deleted message {}'.format(msg.message_id))
 
     def get_queues_by_names(self, sqs, queue_names):
+        # type: (ServiceResource, list) -> list
         return [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
     def get_queues_by_prefixes(self, sqs, prefixes):
+        # type: (ServiceResource, list) -> list
         queues = []
 
         for prefix in prefixes:
