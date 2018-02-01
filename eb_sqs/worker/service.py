@@ -66,8 +66,17 @@ class WorkerService(object):
                 messages = self.poll_messages(queue)
                 logger.debug('[django-eb-sqs] Polled {} messages'.format(len(messages)))
 
+                msg_entries = []
+
                 for msg in messages:
                     self.process_message(msg, worker)
+                    msg_entries.append({
+                            'Id': msg.message_id,
+                            'ReceiptHandle': msg.receipt_handle
+                    })
+
+                queue.delete_messages(Entries=msg_entries)
+                logger.debug('[django-eb-sqs] Deleted {} messages'.format(len(messages)))
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
 
@@ -86,9 +95,6 @@ class WorkerService(object):
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
-        finally:
-            msg.delete()
-            logger.debug('[django-eb-sqs] Deleted message {}'.format(msg.message_id))
 
     def get_queues_by_names(self, sqs, queue_names):
         # type: (ServiceResource, list) -> list
