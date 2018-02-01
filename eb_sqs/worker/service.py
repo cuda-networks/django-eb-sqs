@@ -75,8 +75,9 @@ class WorkerService(object):
                             'ReceiptHandle': msg.receipt_handle
                     })
 
-                queue.delete_messages(Entries=msg_entries)
-                logger.debug('[django-eb-sqs] Deleted {} messages'.format(len(messages)))
+                if len(messages) > 0:
+                    queue.delete_messages(Entries=msg_entries)
+                    logger.debug('[django-eb-sqs] Deleted {} messages'.format(len(messages)))
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
 
