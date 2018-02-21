@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from datetime import timedelta, datetime
+from time import sleep
 
 import boto3
 import logging
@@ -83,12 +84,12 @@ class WorkerService(object):
         # type: (Queue, list) -> None
         if len(msg_entries) > 0:
             response = queue.delete_messages(Entries=msg_entries)
-            logger.debug('[django-eb-sqs] Deleted {} messages successfully'.format(
-                len(response.get('Successful', []))
-            ))
-            logger.debug('[django-eb-sqs] Failed deleting {} messages'.format(
-                len(response.get('Failed', []))
-            ))
+
+            # logging
+            failed = response.get('Failed', [])
+            num_failed = len(failed)
+            if num_failed > 0:
+                logger.warning('[django-eb-sqs] Failed deleting {} messages: {}'.format(num_failed, failed))
 
     def poll_messages(self, queue):
         # type: (Queue) -> list
@@ -100,11 +101,13 @@ class WorkerService(object):
     def process_message(self, msg, worker):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
-        try:
-            worker.execute(msg.body)
-            logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
-        except Exception as exc:
-            logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
+        sleep(10)
+        print('Retry number {}'.format(msg.attributes['ApproximateReceiveCount']))
+        # try:
+        #     worker.execute(msg.body)
+        #     logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
+        # except Exception as exc:
+        #     logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
 
     def get_queues_by_names(self, sqs, queue_names):
         # type: (ServiceResource, list) -> list
