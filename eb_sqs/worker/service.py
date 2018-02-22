@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 from datetime import timedelta, datetime
-from time import sleep
 
 import boto3
 import logging
@@ -101,16 +100,11 @@ class WorkerService(object):
     def process_message(self, msg, worker):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
-        print(msg)
-        if msg.attributes:
-            print('Retry number {}'.format(msg.attributes.get('ApproximateReceiveCount', 0)))
-        sleep(10)
-
-        # try:
-        #     worker.execute(msg.body)
-        #     logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
-        # except Exception as exc:
-        #     logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
+        try:
+            worker.execute(msg.body)
+            logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
+        except Exception as exc:
+            logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
 
     def get_queues_by_names(self, sqs, queue_names):
         # type: (ServiceResource, list) -> list
