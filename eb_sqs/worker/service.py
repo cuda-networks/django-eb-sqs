@@ -83,12 +83,12 @@ class WorkerService(object):
         # type: (Queue, list) -> None
         if len(msg_entries) > 0:
             response = queue.delete_messages(Entries=msg_entries)
-            logger.debug('[django-eb-sqs] Deleted {} messages successfully'.format(
-                len(response.get('Successful', []))
-            ))
-            logger.debug('[django-eb-sqs] Failed deleting {} messages'.format(
-                len(response.get('Failed', []))
-            ))
+
+            # logging
+            failed = response.get('Failed', [])
+            num_failed = len(failed)
+            if num_failed > 0:
+                logger.warning('[django-eb-sqs] Failed deleting {} messages: {}'.format(num_failed, failed))
 
     def poll_messages(self, queue):
         # type: (Queue) -> list
