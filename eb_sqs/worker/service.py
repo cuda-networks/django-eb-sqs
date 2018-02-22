@@ -102,7 +102,7 @@ class WorkerService(object):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         sleep(10)
-        print('Retry number {}'.format(msg.attributes['ApproximateReceiveCount']))
+        print('Retry number {}'.format(msg.attributes.get('ApproximateReceiveCount', 0)))
         # try:
         #     worker.execute(msg.body)
         #     logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
