@@ -101,6 +101,7 @@ class WorkerService(object):
     def process_message(self, msg, worker):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
+        print(msg)
         if msg.attributes:
             print('Retry number {}'.format(msg.attributes.get('ApproximateReceiveCount', 0)))
         sleep(10)
