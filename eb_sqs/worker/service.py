@@ -5,6 +5,7 @@ from datetime import timedelta, datetime
 import boto3
 import logging
 
+from boto.sqs.message import Message
 from botocore.config import Config
 from django.utils import timezone
 
@@ -101,6 +102,7 @@ class WorkerService(object):
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
+            AttributeNames=['All']
         )
 
     def process_message(self, msg, worker):
@@ -110,7 +112,6 @@ class WorkerService(object):
             # worker.execute(msg.body)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
 
-            msg.load()
             print(msg.attributes)
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
