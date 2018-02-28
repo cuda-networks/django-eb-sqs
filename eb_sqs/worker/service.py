@@ -5,7 +5,6 @@ from datetime import timedelta, datetime
 import boto3
 import logging
 
-from boto.sqs.message import Message
 from botocore.config import Config
 from django.utils import timezone
 
@@ -17,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class WorkerService(object):
-    PREFIX_STR = 'prefix:'
+    _PREFIX_STR = 'prefix:'
+
+    _RECEIVE_COUNT_ATTRIBUTE = 'ApproximateReceiveCount'
 
     def process_queues(self, queue_names):
         # type: (list) -> None
@@ -29,16 +30,10 @@ class WorkerService(object):
             config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
         )
 
-        sqs_client = boto3.client(
-            'sqs',
-            region_name=settings.AWS_REGION,
-            config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
-        )
-
-        prefixes = list(filter(lambda qn: qn.startswith(self.PREFIX_STR), queue_names))
+        prefixes = list(filter(lambda qn: qn.startswith(self._PREFIX_STR), queue_names))
         queues = self.get_queues_by_names(sqs, list(set(queue_names) - set(prefixes)))
 
-        queue_prefixes = [prefix.split(self.PREFIX_STR)[1] for prefix in prefixes]
+        queue_prefixes = [prefix.split(self._PREFIX_STR)[1] for prefix in prefixes]
         static_queues = queues
         last_update_time = timezone.make_aware(datetime.min)
 
@@ -102,7 +97,7 @@ class WorkerService(object):
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
-            AttributeNames=['All']
+            AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE]
         )
 
     def process_message(self, msg, worker):
@@ -110,6 +105,8 @@ class WorkerService(object):
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
             # worker.execute(msg.body)
+            from time import sleep
+            sleep(10)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
 
             print(msg.attributes)
