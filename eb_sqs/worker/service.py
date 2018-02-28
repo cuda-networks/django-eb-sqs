@@ -28,6 +28,12 @@ class WorkerService(object):
             config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
         )
 
+        sqs_client = boto3.client(
+            'sqs',
+            region_name=settings.AWS_REGION,
+            config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
+        )
+
         prefixes = list(filter(lambda qn: qn.startswith(self.PREFIX_STR), queue_names))
         queues = self.get_queues_by_names(sqs, list(set(queue_names) - set(prefixes)))
 
@@ -101,8 +107,11 @@ class WorkerService(object):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
-            worker.execute(msg.body)
+            # worker.execute(msg.body)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
+
+            msg.load()
+            print(msg.attributes)
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
 
