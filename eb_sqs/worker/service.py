@@ -104,14 +104,14 @@ class WorkerService(object):
         # type: (Message, Worker) -> None
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
-            worker.execute(msg.body)
-            logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
-
             receive_count = int(msg.attributes[self._RECEIVE_COUNT_ATTRIBUTE])
             if receive_count > 1:
                 logger.warning('[django-eb-sqs] SQS re-queued message {} times: Msg Id: {} Body: {}'.format(
                     receive_count, msg.message_id, msg.body
                 ))
+
+            worker.execute(msg.body)
+            logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
 
