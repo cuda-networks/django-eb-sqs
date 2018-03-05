@@ -79,8 +79,8 @@ class WorkerService(object):
                     })
 
                 self.delete_messages(queue, msg_entries)
-            except ClientError as ex:
-                error_code = ex.response.get('Error', {}).get('Code', None)
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
                     logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=1)
                 else:
