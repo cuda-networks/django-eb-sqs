@@ -6,6 +6,7 @@ import boto3
 import logging
 
 from botocore.config import Config
+from botocore.exceptions import ClientError
 from django.utils import timezone
 
 from eb_sqs import settings
@@ -59,10 +60,10 @@ class WorkerService(object):
                 ))
 
             logger.debug('[django-eb-sqs] Processing {} queues'.format(len(queues)))
-            self.process_messages(queues, worker)
+            self.process_messages(queues, worker, static_queues)
 
-    def process_messages(self, queues, worker):
-        # type: (list, Worker) -> None
+    def process_messages(self, queues, worker, static_queues):
+        # type: (list, Worker, list) -> None
         for queue in queues:
             try:
                 messages = self.poll_messages(queue)
@@ -78,6 +79,12 @@ class WorkerService(object):
                     })
 
                 self.delete_messages(queue, msg_entries)
+            except ClientError as exc:
+                error_code = exc.response.get('Error', {}).get('Code', None)
+                if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
+                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=1)
+                else:
+                    logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
 
