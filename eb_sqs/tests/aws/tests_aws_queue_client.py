@@ -6,13 +6,14 @@ import boto3
 import time
 from moto import mock_sqs
 
+from eb_sqs import settings
 from eb_sqs.aws.sqs_queue_client import SqsQueueClient
 
 
 class AwsQueueClientTest(TestCase):
     @mock_sqs()
     def test_add_message(self):
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
         queue = sqs.create_queue(QueueName='eb-sqs-default')
 
         queue_client = SqsQueueClient()
@@ -25,7 +26,7 @@ class AwsQueueClientTest(TestCase):
     @mock_sqs()
     def test_add_message_delayed(self):
         delay = 1
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs', region_name=settings.AWS_REGION)
         queue = sqs.create_queue(QueueName='eb-sqs-default')
         queue_client = SqsQueueClient()
 
