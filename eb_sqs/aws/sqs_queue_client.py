@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 from eb_sqs import settings
@@ -10,7 +11,10 @@ from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException, 
 class SqsQueueClient(QueueClient):
     def __init__(self):
         # type: () -> None
-        self.sqs = boto3.resource('sqs')
+        self.sqs = boto3.resource('sqs',
+                                  region_name=settings.AWS_REGION,
+                                  config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
+                                  )
         self.queue_cache = {}
 
     def _get_queue(self, queue_name):
