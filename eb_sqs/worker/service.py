@@ -36,7 +36,7 @@ class WorkerService(object):
 
         queue_prefixes = [prefix.split(self._PREFIX_STR)[1] for prefix in prefixes]
         static_queues = queues
-        last_update_time = timezone.make_aware(datetime.min)
+        last_update_time = timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S)
 
         logger.debug('[django-eb-sqs] Connected to SQS: {}'.format(', '.join(queue_names)))
 
