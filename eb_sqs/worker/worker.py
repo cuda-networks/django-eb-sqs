@@ -97,14 +97,14 @@ class Worker(object):
             self._add_to_group(worker_task)
 
             logger.debug('%s task %s (%s, retry-id: %s): %s, %s (%s%s)',
-                        'Retrying' if is_retry else 'Delaying',
-                        worker_task.abs_func_name,
-                        worker_task.id,
-                        worker_task.retry_id,
-                        worker_task.args,
-                        worker_task.kwargs,
-                        worker_task.queue,
-                        ', inline' if execute_inline else '')
+                         'Retrying' if is_retry else 'Delaying',
+                         worker_task.abs_func_name,
+                         worker_task.id,
+                         worker_task.retry_id,
+                         worker_task.args,
+                         worker_task.kwargs,
+                         worker_task.queue,
+                         ', inline' if execute_inline else '')
 
             if execute_inline:
                 return self._execute_task(worker_task)
@@ -116,12 +116,12 @@ class Worker(object):
             raise InvalidQueueException(ex.queue_name)
         except QueueClientException as ex:
             self._remove_from_group(worker_task)
-            logger.exception('Task %s (%s, retry-id: %s) failed to enqueue to %s: %s',
-                        worker_task.abs_func_name,
-                        worker_task.id,
-                        worker_task.retry_id,
-                        worker_task.queue,
-                        ex)
+            logger.warning('Task %s (%s, retry-id: %s) failed to enqueue to %s: %s',
+                           worker_task.abs_func_name,
+                           worker_task.id,
+                           worker_task.retry_id,
+                           worker_task.queue,
+                           ex)
 
             raise QueueException()
 
@@ -160,7 +160,8 @@ class Worker(object):
             if self.group_client.remove(worker_task):
                 self._execute_group_callback(worker_task)
 
-    def _execute_group_callback(self, worker_task):
+    @staticmethod
+    def _execute_group_callback(worker_task):
         # type: (WorkerTask) -> None
         if settings.GROUP_CALLBACK_TASK:
             callback = settings.GROUP_CALLBACK_TASK
