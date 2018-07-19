@@ -3,11 +3,14 @@ from __future__ import absolute_import, unicode_literals
 import base64
 import importlib
 import json
+import uuid
+
+from eb_sqs import settings
 
 try:
-   import cPickle as pickle
-except:
-   import pickle
+    import cPickle as pickle
+except Exception:
+    import pickle
 
 
 class WorkerTask(object):
@@ -74,7 +77,7 @@ class WorkerTask(object):
 
     @staticmethod
     def _pickle_args(args):
-        # type: (dict) -> unicode
+        # type: (Any) -> unicode
         return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL)).decode('utf-8')
 
     @staticmethod
@@ -82,7 +85,7 @@ class WorkerTask(object):
         # type: (unicode) -> WorkerTask
         task = json.loads(msg)
 
-        id = task['id']
+        id = task.get('id', str(uuid.uuid4()))
         group_id = task.get('groupId')
 
         abs_func_name = task['func']
@@ -93,11 +96,15 @@ class WorkerTask(object):
         func = getattr(func_module, func_name)
 
         use_pickle = task.get('pickle', False)
-        queue = task['queue']
-        args = WorkerTask._unpickle_args(task['args']) if use_pickle else task['args']
+        queue = task.get('queue', settings.DEFAULT_QUEUE)
+
+        task_args = task.get('args', [])
+        args = WorkerTask._unpickle_args(task_args) if use_pickle else task_args
+
         kwargs = WorkerTask._unpickle_args(task['kwargs']) if use_pickle else task['kwargs']
-        max_retries = task['maxRetries']
-        retry = task['retry']
+
+        max_retries = task.get('maxRetries', settings.DEFAULT_MAX_RETRIES)
+        retry = task.get('retry', 0)
         retry_id = task.get('retryId')
 
         return WorkerTask(id, group_id, queue, func, args, kwargs, max_retries, retry, retry_id, use_pickle)
