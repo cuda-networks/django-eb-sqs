@@ -1,16 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
-from datetime import timedelta, datetime
-
 import boto3
 import logging
-
 from botocore.config import Config
 from botocore.exceptions import ClientError
+from datetime import timedelta
 from django.utils import timezone
 
 from eb_sqs import settings
 from eb_sqs.worker.worker import Worker
+from eb_sqs.worker.worker_exceptions import ExecutionFailedException
 from eb_sqs.worker.worker_factory import WorkerFactory
 
 logger = logging.getLogger(__name__)
@@ -55,7 +54,7 @@ class WorkerService(object):
                     timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S) > last_update_time:
                 queues = static_queues + self.get_queues_by_prefixes(sqs, queue_prefixes)
                 last_update_time = timezone.now()
-                logger.info('[django-eb-sqs] Updated SQS queues: {}'.format(
+                logger.debug('[django-eb-sqs] Updated SQS queues: {}'.format(
                     ', '.join([queue.url for queue in queues])
                 ))
 
@@ -119,6 +118,8 @@ class WorkerService(object):
 
             worker.execute(msg.body)
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
+        except ExecutionFailedException as exc:
+            logger.warning('[django-eb-sqs] Handling message {} got error: {}'.format(msg.message_id, repr(exc)))
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
 
