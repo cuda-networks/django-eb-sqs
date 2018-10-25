@@ -148,7 +148,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
 - EB_SQS_DEFAULT_COUNT_RETRIES (`True`): Count retry calls. Needed if max retries check shall be executed.
 - EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
-- EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development.
+- EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development. Global setting `True` will override setting it on a task level.
 - EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.
 - EB_SQS_GROUP_CALLBACK_TASK (`None`): Group callback (String or Function). Must be a valid task.
 - EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
