@@ -18,7 +18,7 @@ def func_delay_decorator(func, queue_name, max_retries_count, use_pickle):
         max_retries = _get_kwarg_val(kwargs, 'max_retries', max_retries_count if max_retries_count else settings.DEFAULT_MAX_RETRIES)
         pickle = _get_kwarg_val(kwargs, 'use_pickle', use_pickle if use_pickle else settings.USE_PICKLE)
 
-        execute_inline = True if settings.EXECUTE_INLINE else _get_kwarg_val(kwargs, 'execute_inline', False)
+        execute_inline = _get_kwarg_val(kwargs, 'execute_inline', False) or settings.EXECUTE_INLINE
         delay = _get_kwarg_val(kwargs, 'delay',  settings.DEFAULT_DELAY)
         group_id = _get_kwarg_val(kwargs, 'group_id', None)
 
@@ -32,7 +32,7 @@ def func_retry_decorator(worker_task):
     # type: (WorkerTask) -> (tuple, dict)
     def wrapper(*args, **kwargs):
         # type: (tuple, dict) -> Any
-        execute_inline = True if settings.EXECUTE_INLINE else _get_kwarg_val(kwargs, 'execute_inline', False)
+        execute_inline = _get_kwarg_val(kwargs, 'execute_inline', False) or settings.EXECUTE_INLINE
         delay = _get_kwarg_val(kwargs, 'delay', settings.DEFAULT_DELAY)
         count_retries = _get_kwarg_val(kwargs, 'count_retries', settings.DEFAULT_COUNT_RETRIES)
 
