@@ -1,13 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
-import boto3
 import logging
+from datetime import timedelta
+
+import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
-from datetime import timedelta
 from django.utils import timezone
 
 from eb_sqs import settings
+from eb_sqs.worker.commons import django_db_management
 from eb_sqs.worker.worker import Worker
 from eb_sqs.worker.worker_exceptions import ExecutionFailedException
 from eb_sqs.worker.worker_factory import WorkerFactory
@@ -116,7 +118,9 @@ class WorkerService(object):
                     receive_count, msg.message_id, msg.body
                 ))
 
-            worker.execute(msg.body)
+            with django_db_management():
+                worker.execute(msg.body)
+
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except ExecutionFailedException as exc:
             logger.warning('[django-eb-sqs] Handling message {} got error: {}'.format(msg.message_id, repr(exc)))
