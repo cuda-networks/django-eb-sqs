@@ -6,6 +6,7 @@ from datetime import timedelta
 import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
+import django.dispatch
 from django.utils import timezone
 
 from eb_sqs import settings
@@ -16,10 +17,13 @@ from eb_sqs.worker.worker_factory import WorkerFactory
 
 logger = logging.getLogger(__name__)
 
+MESSAGES_RECEIVED = django.dispatch.Signal(providing_args=['messages'])
+MESSAGES_PROCESSED = django.dispatch.Signal(providing_args=['messages'])
+MESSAGES_DELETED = django.dispatch.Signal(providing_args=['messages'])
+
 
 class WorkerService(object):
     _PREFIX_STR = 'prefix:'
-
     _RECEIVE_COUNT_ATTRIBUTE = 'ApproximateReceiveCount'
 
     def process_queues(self, queue_names):
@@ -70,8 +74,9 @@ class WorkerService(object):
                 messages = self.poll_messages(queue)
                 logger.debug('[django-eb-sqs] Polled {} messages'.format(len(messages)))
 
-                msg_entries = []
+                MESSAGES_RECEIVED.send(sender=self.__class__, messages=messages)
 
+                msg_entries = []
                 for msg in messages:
                     self.process_message(msg, worker)
                     msg_entries.append({
@@ -79,7 +84,11 @@ class WorkerService(object):
                             'ReceiptHandle': msg.receipt_handle
                     })
 
+                MESSAGES_PROCESSED.send(sender=self.__class__, messages=messages)
+
                 self.delete_messages(queue, msg_entries)
+
+                MESSAGES_DELETED.send(sender=self.__class__, messages=messages)
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:

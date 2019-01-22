@@ -113,6 +113,8 @@ python manage.py process_queue --queues queue1,queue2 # process queue1 and queue
 python manage.py process_queue --queues queue1,prefix:pr1-,queue2 # process queue1, queue2 and any queue whose name starts with 'pr1-'
 ```
 
+Use the signals `MESSAGES_RECEIVED`, `MESSAGES_PROCESSED`, `MESSAGES_DELETED` of the `WorkerService` to get informed about the current SQS batch being processed by the management command.
+
 #### Group Tasks
 Multiple tasks can be grouped by specifying the `group_id` argument when calling `delay` on a task.
 If all tasks of a specific group are executed then the group callback task specified by `EB_SQS_GROUP_CALLBACK_TASK` is executed.
