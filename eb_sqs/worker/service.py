@@ -122,13 +122,9 @@ class WorkerService(object):
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
             receive_count = int(msg.attributes[self._RECEIVE_COUNT_ATTRIBUTE])
-            if receive_count > 1:
-                logger.warning('[django-eb-sqs] SQS re-queued message {} times: Msg Id: {} Body: {}'.format(
-                    receive_count, msg.message_id, msg.body
-                ))
 
             with django_db_management():
-                worker.execute(msg.body)
+                worker.execute(msg.body, receive_count)
 
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except ExecutionFailedException as exc:

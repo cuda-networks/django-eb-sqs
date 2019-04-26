@@ -12,30 +12,37 @@ from eb_sqs.worker.worker import Worker
 from eb_sqs.worker.worker_exceptions import MaxRetriesReachedException
 from eb_sqs.worker.worker_factory import WorkerFactory
 
+
 class TestException(Exception):
     pass
+
 
 @task()
 def dummy_task(msg):
     return msg
+
 
 @task(max_retries=100)
 def retries_task(num_of_retries):
     if retries_task.retry_num < num_of_retries:
         retries_task.retry(execute_inline=True)
 
+
 @task(max_retries=5)
 def max_retries_task():
     max_retries_task.retry(execute_inline=True)
+
 
 @task(max_retries=100)
 def repeating_group_task(num_of_retries):
     if repeating_group_task.retry_num < num_of_retries:
         repeating_group_task.retry(execute_inline=True)
 
+
 @task()
 def exception_group_task():
     raise TestException()
+
 
 @task(max_retries=100)
 def exception_repeating_group_task(num_of_retries):
@@ -44,11 +51,14 @@ def exception_repeating_group_task(num_of_retries):
     else:
         exception_repeating_group_task.retry(execute_inline=True)
 
+
 @task(max_retries=5)
 def max_retries_group_task():
     max_retries_group_task.retry(execute_inline=True)
 
+
 global_group_mock = Mock()
+
 
 class WorkerTest(TestCase):
     def setUp(self):
@@ -65,14 +75,14 @@ class WorkerTest(TestCase):
 
     def setUpGroupsHandling(self):
         self.group_set = set()
-        self.group_mock.add.side_effect = lambda task: self.group_set.add('{}-{}'.format(task.id, task.retry_id))
-        self.group_mock.remove.side_effect = lambda task: len(self.group_set) == 0 if self.group_set.discard(
-            '{}-{}'.format(task.id, task.retry_id)) is None else False
+        self.group_mock.add.side_effect = lambda tsk: self.group_set.add('{}-{}'.format(tsk.id, tsk.retry_id))
+        self.group_mock.remove.side_effect = lambda tsk: len(self.group_set) == 0 if self.group_set.discard(
+            '{}-{}'.format(tsk.id, tsk.retry_id)) is None else False
 
     def test_worker_execution_no_group(self):
         msg = '{"id": "id-1", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
 
-        result = self.worker.execute(msg)
+        result = self.worker.execute(msg, 2)
 
         self.assertEqual(result, 'Hello World!')
         self.group_mock.remove.assert_not_called()

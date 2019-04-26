@@ -23,10 +23,15 @@ class Worker(object):
         self.queue_client = queue_client
         self.group_client = group_client
 
-    def execute(self, msg):
-        # type: (unicode) -> Any
+    def execute(self, msg, receive_count=1):
+        # type: (unicode, int) -> Any
         try:
             worker_task = WorkerTask.deserialize(msg)
+
+            if receive_count > 1:
+                logger.warning('[django-eb-sqs] SQS re-queued message {} times - queue: {} func: {} retry: {}'.format(
+                    receive_count, worker_task.queue, worker_task.func, worker_task.retry
+                ))
         except Exception as ex:
             logger.exception(
                 'Message %s is not a valid worker task: %s',
