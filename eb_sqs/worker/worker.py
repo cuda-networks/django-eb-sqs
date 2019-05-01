@@ -29,8 +29,8 @@ class Worker(object):
             worker_task = WorkerTask.deserialize(msg)
 
             if receive_count > 1:
-                logger.warning('[django-eb-sqs] SQS re-queued message {} times - queue: {} func: {} retry: {}'.format(
-                    receive_count, worker_task.queue, worker_task.func, worker_task.retry
+                logger.warning('[django-eb-sqs] SQS re-queued message {} times - queue: {} func: {} retry: {} args: {}'.format(
+                    receive_count, worker_task.queue, worker_task.abs_func_name, worker_task.retry, worker_task.args
                 ))
         except Exception as ex:
             logger.exception(
