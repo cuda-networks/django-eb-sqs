@@ -43,6 +43,9 @@ class WorkerService(object):
         static_queues = queues
         last_update_time = timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S)
 
+        self.write_healthcheck_file()
+        last_healthcheck_time = timezone.now()
+
         logger.debug('[django-eb-sqs] Connected to SQS: {}'.format(', '.join(queue_names)))
 
         worker = WorkerFactory.default().create()
@@ -66,6 +69,9 @@ class WorkerService(object):
 
             logger.debug('[django-eb-sqs] Processing {} queues'.format(len(queues)))
             self.process_messages(queues, worker, static_queues)
+
+            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_PERIOD_S) > last_healthcheck_time:
+                self.write_healthcheck_file()
 
     def process_messages(self, queues, worker, static_queues):
         # type: (list, Worker, list) -> None
@@ -144,3 +150,7 @@ class WorkerService(object):
             queues += sqs.queues.filter(QueueNamePrefix=prefix)
 
         return queues
+
+    def write_healthcheck_file(self):
+        with open(settings.HEALTHCHECK_FILE_NAME, 'w') as file:
+            file.write(timezone.now().isoformat())
