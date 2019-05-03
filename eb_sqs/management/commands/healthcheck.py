@@ -2,10 +2,12 @@ import sys
 
 import logging
 from datetime import timedelta
-from django.conf import settings
+
 from django.core.management import BaseCommand
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+
+from eb_sqs import settings
 
 logger = logging.getLogger(__name__)
 
