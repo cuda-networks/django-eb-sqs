@@ -72,6 +72,7 @@ class WorkerService(object):
 
             if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > last_healthcheck_time:
                 self.write_healthcheck_file()
+                last_healthcheck_time = timezone.now()
 
     def process_messages(self, queues, worker, static_queues):
         # type: (list, Worker, list) -> None
