@@ -70,7 +70,7 @@ class WorkerService(object):
             logger.debug('[django-eb-sqs] Processing {} queues'.format(len(queues)))
             self.process_messages(queues, worker, static_queues)
 
-            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_PERIOD_S) > last_healthcheck_time:
+            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > last_healthcheck_time:
                 self.write_healthcheck_file()
 
     def process_messages(self, queues, worker, static_queues):
