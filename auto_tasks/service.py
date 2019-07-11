@@ -32,6 +32,12 @@ class AutoTaskService(BaseAutoTaskService):
         func_name = method.func_name
 
         def _auto_task_wrapper_invoker(*args, **kwargs):
+            if queue_name:
+                kwargs['queue_name'] = queue_name
+
+            if max_retries:
+                kwargs['max_retries'] = max_retries
+
             _auto_task_wrapper.delay(
                 class_.__module__,
                 class_.__name__,
