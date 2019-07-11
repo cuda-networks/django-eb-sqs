@@ -12,7 +12,14 @@ logger = logging.getLogger(__name__)
 @task()
 def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
     try:
-        print('m: {} c: {} f: {}'.format(module_name, class_name, func_name))
+        logger.debug(
+            'Invoke _auto_task_wrapper with module: %s class: %s func: %s args: %s and kwargs: %s',
+            module_name,
+            class_name,
+            func_name,
+            args,
+            kwargs
+        )
 
         module = importlib.import_module(module_name)  # import module
         class_ = getattr(module, class_name)  # find class
