@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 @task()
 def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
     try:
+        print('m: {} c: {} f: {}'.format(module_name, class_name, func_name))
+
         module = importlib.import_module(module_name)  # import module
         class_ = getattr(module, class_name)  # find class
         instance = class_(auto_task_service=NoopTaskService())  # instantiate class using empty AutoTaskService
