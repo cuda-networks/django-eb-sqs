@@ -42,7 +42,7 @@ class AutoTaskService(BaseAutoTaskService):
                 class_.__module__,
                 class_.__name__,
                 func_name,
-                *args, queue_name=queue_name, max_retries=max_retries, **kwargs
+                *args, **kwargs
             )
 
         setattr(instance, func_name, _auto_task_wrapper_invoker)
