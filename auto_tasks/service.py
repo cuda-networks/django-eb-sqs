@@ -39,7 +39,11 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
 
             _auto_task_wrapper.retry(**retry_kwargs)
         except MaxRetriesReachedException:
-            logger.error('Reached max retries in auto task {}.{}.{} with error: {}'.format(module_name, class_name, func_name, repr(exc)))
+            if exc.max_retries_func:
+                exc.max_retries_func()
+            else:
+                # by default log an error
+                logger.error('Reached max retries in auto task {}.{}.{} with error: {}'.format(module_name, class_name, func_name, repr(exc)))
 
 
 class AutoTaskService(BaseAutoTaskService):
