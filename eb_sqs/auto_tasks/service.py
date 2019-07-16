@@ -1,8 +1,8 @@
 import importlib
 import logging
 
-from auto_tasks.base_service import BaseAutoTaskService, NoopTaskService
-from auto_tasks.exceptions import RetryableTaskException
+from eb_sqs.auto_tasks.base_service import BaseAutoTaskService, NoopTaskService
+from eb_sqs.auto_tasks.exceptions import RetryableTaskException
 from eb_sqs.decorators import task
 from eb_sqs.worker.worker_exceptions import MaxRetriesReachedException
 
@@ -23,8 +23,21 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
 
         module = importlib.import_module(module_name)  # import module
         class_ = getattr(module, class_name)  # find class
-        instance = class_(auto_task_service=NoopTaskService())  # instantiate class using empty AutoTaskService
-        getattr(instance, func_name)(*args, **kwargs)  # invoke method on instance
+
+        noop_task_service = NoopTaskService()
+        instance = class_(auto_task_service=noop_task_service)  # instantiate class using NoopTaskService
+
+        if noop_task_service.is_func_name_registered(func_name):
+            getattr(instance, func_name)(*args, **kwargs)  # invoke method on instance
+        else:
+            logger.error(
+                'Trying to invoke _auto_task_wrapper for unregistered task with module: %s class: %s func: %s args: %s and kwargs: %s',
+                module_name,
+                class_name,
+                func_name,
+                args,
+                kwargs
+            )
     except RetryableTaskException as exc:
         try:
             retry_kwargs = {}
