@@ -17,7 +17,7 @@ class NoopTaskService(BaseAutoTaskService):
 
     def register_task(self, method, queue_name=None, max_retries=None):
         # type: (Any, str, int) -> None
-        self._registered_func_names.append(method.func_name)
+        self._registered_func_names.append(method.__name__)
 
     def is_func_name_registered(self, func_name):
         # type: (str) -> bool

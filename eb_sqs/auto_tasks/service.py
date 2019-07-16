@@ -41,8 +41,6 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
     except RetryableTaskException as exc:
         try:
             retry_kwargs = {}
-            if 'execute_inline' in kwargs:
-                retry_kwargs['execute_inline'] = kwargs['execute_inline']
 
             if exc.delay is not None:
                 retry_kwargs['delay'] = exc.delay
@@ -62,9 +60,9 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
 class AutoTaskService(BaseAutoTaskService):
     def register_task(self, method, queue_name=None, max_retries=None):
         # type: (Any, str, int) -> None
-        instance = method.im_self
+        instance = method.__self__
         class_ = instance.__class__
-        func_name = method.func_name
+        func_name = method.__name__
 
         def _auto_task_wrapper_invoker(*args, **kwargs):
             if queue_name is not None:
