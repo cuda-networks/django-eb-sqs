@@ -137,7 +137,7 @@ def group_finished(group_id):
 
 #### Auto Tasks
 
-This is a helper tool, for the case you wish to define one of your class method as a task, and make it seamless to all callers.
+This is a helper tool for the case you wish to define one of your class method as a task, and make it seamless to all callers.
 This makes the code much simpler, and allows using classes to invoke your method directly without considering whether it's invoked async or not.
 
 This is how you would define your class:
@@ -154,7 +154,7 @@ class MyService:
 ```
 
 Notice the following:
-1. Your class needs to have defaults for all parameter in the c'tor
+1. Your class needs to have defaults for all parameters in the c'tor
 2. The c'tor must have a parameter named `auto_task_service`
 3. The method shouldn't have any return value (as it's invoked async)
 
