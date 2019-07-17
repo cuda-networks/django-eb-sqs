@@ -135,6 +135,32 @@ def group_finished(group_id):
     pass
 ```
 
+#### Auto Tasks
+
+This is a helper tool for the case you wish to define one of your class method as a task, and make it seamless to all callers.
+This makes the code much simpler, and allows using classes to invoke your method directly without considering whether it's invoked async or not.
+
+This is how you would define your class:
+```python
+class MyService:
+    def __init__(self, p1=default1, ..., pN=defaultN, auto_task_service=None):
+        self._auto_task_service = auto_task_service or AutoTaskService()
+
+        self._auto_task_service.register_task(self.my_task_method)
+    
+    def my_task_method(self, *args, **kwargs):
+        ...
+
+```
+
+Notice the following:
+1. Your class needs to have defaults for all parameters in the c'tor
+2. The c'tor must have a parameter named `auto_task_service`
+3. The method shouldn't have any return value (as it's invoked async)
+
+In case you want your method to retry certain cases, you need to raise `RetryableTaskException`.
+You can provide on optional `delay` time for the retry, set `count_retries=False` in case you don't want to limit retries, or use `max_retries_func` to specify a function which will be invoked when the defined maximum number of retries is exhausted.   
+
 #### Settings
 
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
