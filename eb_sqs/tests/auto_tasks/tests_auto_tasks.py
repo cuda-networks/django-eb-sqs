@@ -13,8 +13,12 @@ class TestService:
 
     def __init__(self, auto_task_service=None):
         self._auto_task_service = auto_task_service or AutoTaskService()
+
         self._auto_task_service.register_task(self.task_method)
         self._auto_task_service.register_task(self.task_retry_method, max_retries=self._MAX_RETRY_NUM)
+
+        self._auto_task_service.register_task(self.task_recursive_method)
+        self._auto_task_service.register_task(self.task_other_method)
 
     def task_method(self, *args, **kwargs):
         self._TEST_MOCK.task_method(*args, **kwargs)
@@ -29,6 +33,15 @@ class TestService:
 
     def non_task_method(self):
         self._TEST_MOCK.non_task_method()
+
+    def task_recursive_method(self, tries=2):
+        if tries > 0:
+            self.task_recursive_method(tries=tries - 1)
+        else:
+            self.task_other_method()
+
+    def task_other_method(self):
+        self._TEST_MOCK.task_other_method()
 
 
 class AutoTasksTest(TestCase):
@@ -61,3 +74,8 @@ class AutoTasksTest(TestCase):
         )
 
         TestService._TEST_MOCK.non_task_method.assert_not_called()
+
+    def test_task_recursive_method(self):
+        self._test_service.task_recursive_method()
+
+        TestService._TEST_MOCK.task_other_method.assert_called_once_with()

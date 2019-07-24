@@ -1,7 +1,6 @@
 import importlib
 import logging
 
-from eb_sqs.auto_tasks.base_service import BaseAutoTaskService, NoopTaskService
 from eb_sqs.auto_tasks.exceptions import RetryableTaskException
 from eb_sqs.decorators import task
 from eb_sqs.worker.worker_exceptions import MaxRetriesReachedException
@@ -24,11 +23,12 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
         module = importlib.import_module(module_name)  # import module
         class_ = getattr(module, class_name)  # find class
 
-        noop_task_service = NoopTaskService()
-        instance = class_(auto_task_service=noop_task_service)  # instantiate class using NoopTaskService
+        auto_task_executor_service = _AutoTaskExecutorService(func_name)
+        instance = class_(auto_task_service=auto_task_executor_service)  # instantiate class using _AutoTaskExecutorService
 
-        if noop_task_service.is_func_name_registered(func_name):
-            getattr(instance, func_name)(*args, **kwargs)  # invoke method on instance
+        executor_func_name = auto_task_executor_service.get_executor_func_name()
+        if executor_func_name:
+            getattr(instance, executor_func_name)(*args, **kwargs)  # invoke method on instance
         else:
             logger.error(
                 'Trying to invoke _auto_task_wrapper for unregistered task with module: %s class: %s func: %s args: %s and kwargs: %s',
@@ -57,7 +57,7 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
                 logger.error('Reached max retries in auto task {}.{}.{} with error: {}'.format(module_name, class_name, func_name, repr(exc)))
 
 
-class AutoTaskService(BaseAutoTaskService):
+class AutoTaskService(object):
     def register_task(self, method, queue_name=None, max_retries=None):
         # type: (Any, str, int) -> None
         instance = method.__self__
@@ -79,3 +79,26 @@ class AutoTaskService(BaseAutoTaskService):
             )
 
         setattr(instance, func_name, _auto_task_wrapper_invoker)
+
+
+class _AutoTaskExecutorService(AutoTaskService):
+    def __init__(self, func_name):
+        # type: (str) -> None
+        self._func_name = func_name
+
+        self._executor_func_name = None
+
+    def register_task(self, method, queue_name=None, max_retries=None):
+        # type: (Any, str, int) -> None
+        if self._func_name == method.__name__:
+            # circuit breaker to allow actually executing the method once
+            instance = method.__self__
+
+            self._executor_func_name = self._func_name + '__auto_task_executor__'
+            setattr(instance, self._executor_func_name, getattr(instance, self._func_name))
+
+        super(_AutoTaskExecutorService, self).register_task(method, queue_name, max_retries)
+
+    def get_executor_func_name(self):
+        # type: () -> str
+        return self._executor_func_name
