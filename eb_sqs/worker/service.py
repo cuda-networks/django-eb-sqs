@@ -81,7 +81,7 @@ class WorkerService(object):
                 messages = self.poll_messages(queue)
                 logger.debug('[django-eb-sqs] Polled {} messages'.format(len(messages)))
 
-                self._execute_user_code(lambda: MESSAGES_RECEIVED.send(sender=self.__class__, messages=messages))
+                self._send_signal(MESSAGES_RECEIVED, messages=messages)
 
                 msg_entries = []
                 for msg in messages:
@@ -91,11 +91,11 @@ class WorkerService(object):
                             'ReceiptHandle': msg.receipt_handle
                     })
 
-                self._execute_user_code(lambda: MESSAGES_PROCESSED.send(sender=self.__class__, messages=messages))
+                self._send_signal(MESSAGES_PROCESSED, messages=messages)
 
                 self.delete_messages(queue, msg_entries)
 
-                self._execute_user_code(lambda: MESSAGES_DELETED.send(sender=self.__class__, messages=messages))
+                self._send_signal(MESSAGES_DELETED, messages=messages)
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
@@ -123,6 +123,11 @@ class WorkerService(object):
             WaitTimeSeconds=settings.WAIT_TIME_S,
             AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE]
         )
+
+    def _send_signal(self, signal, messages):
+        # type: (django.dispatch.Signal, list) -> None
+        if signal.has_listeners(sender=self.__class__):
+            self._execute_user_code(lambda: signal.send(sender=self.__class__, messages=messages))
 
     def _process_message(self, msg, worker):
         # type: (Message, Worker) -> None
