@@ -164,5 +164,6 @@ class WorkerService(object):
         return queues
 
     def write_healthcheck_file(self):
+        # type: () -> None
         with open(settings.HEALTHCHECK_FILE_NAME, 'w') as file:
             file.write(timezone.now().isoformat())
