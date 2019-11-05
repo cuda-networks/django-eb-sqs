@@ -6,6 +6,7 @@ AWS_REGION = getattr(settings, 'EB_AWS_REGION', 'us-east-1')  # type: str
 
 MAX_NUMBER_OF_MESSAGES = getattr(settings, 'EB_SQS_MAX_NUMBER_OF_MESSAGES', 10)  # type: int
 WAIT_TIME_S = getattr(settings, 'EB_SQS_WAIT_TIME_S', 2)  # type: int
+NO_QUEUES_WAIT_TIME_S = getattr(settings, 'NO_QUEUES_WAIT_TIME_S', 5)  # type: int
 
 AUTO_ADD_QUEUE = getattr(settings, 'EB_SQS_AUTO_ADD_QUEUE', False)  # type: bool
 QUEUE_PREFIX = getattr(settings, 'EB_SQS_QUEUE_PREFIX', 'eb-sqs-')  # type: str

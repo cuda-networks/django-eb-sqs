@@ -168,6 +168,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_AWS_REGION (`us-east-1`): The AWS region to use when working with SQS.
 - EB_SQS_MAX_NUMBER_OF_MESSAGES (`10`): The maximum number of messages to read in a single call from SQS (<= 10).
 - EB_SQS_WAIT_TIME_S (`2`): The time to wait (seconds) when receiving messages from SQS.
+- NO_QUEUES_WAIT_TIME_S (`5`): The time a workers waits if there are no SQS queues available to process.
 - EB_SQS_AUTO_ADD_QUEUE (`False`): If queues should be added automatically to AWS if they don't exist.
 - EB_SQS_QUEUE_MESSAGE_RETENTION (`1209600`): The value (in seconds) to be passed to MessageRetentionPeriod parameter, when creating a queue (only relevant in case EB_SQS_AUTO_ADD_QUEUE is set to True).
 - EB_SQS_QUEUE_VISIBILITY_TIMEOUT (`300`): The value (in seconds) to be passed to VisibilityTimeout parameter, when creating a queue (only relevant in case EB_SQS_AUTO_ADD_QUEUE is set to True).

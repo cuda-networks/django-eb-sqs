@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 from datetime import timedelta
+from time import sleep
 
 import boto3
 from botocore.config import Config
@@ -51,6 +52,7 @@ class WorkerService(object):
         worker = WorkerFactory.default().create()
 
         logger.info('[django-eb-sqs] WAIT_TIME_S = {}'.format(settings.WAIT_TIME_S))
+        logger.info('[django-eb-sqs] NO_QUEUES_WAIT_TIME_S = {}'.format(settings.NO_QUEUES_WAIT_TIME_S))
         logger.info('[django-eb-sqs] MAX_NUMBER_OF_MESSAGES = {}'.format(settings.MAX_NUMBER_OF_MESSAGES))
         logger.info('[django-eb-sqs] AUTO_ADD_QUEUE = {}'.format(settings.AUTO_ADD_QUEUE))
         logger.info('[django-eb-sqs] QUEUE_PREFIX = {}'.format(settings.QUEUE_PREFIX))
@@ -68,7 +70,10 @@ class WorkerService(object):
                 ))
 
             logger.debug('[django-eb-sqs] Processing {} queues'.format(len(queues)))
-            self.process_messages(queues, worker, static_queues)
+            if len(queues) == 0:
+                sleep(settings.NO_QUEUES_WAIT_TIME_S)
+            else:
+                self.process_messages(queues, worker, static_queues)
 
             if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > last_healthcheck_time:
                 self.write_healthcheck_file()
