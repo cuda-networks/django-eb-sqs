@@ -187,6 +187,7 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
 - EB_SQS_AWS_MAX_RETRIES (`30`): Default retry limit on a boto3 call to AWS SQS.
 - EB_SQS_REFRESH_PREFIX_QUEUES_S (`10`): Minimal number of seconds to wait between refreshing queue list, in case prefix is used
+- EB_SQS_ENDPOINT_URL (`None`): Endpoint url use to contact AWS SQS service. Usefull during develoment in order to use a mock queue
 
 
 ### Development
