@@ -41,6 +41,7 @@ class Command(BaseCommand):
             sqs = boto3.resource(
                 'sqs',
                 region_name=settings.AWS_REGION,
+                endpoint_url=settings.SQS_ENDPOINT_URL,
                 config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
             )
             queue = sqs.get_queue_by_name(QueueName=queue_name)
