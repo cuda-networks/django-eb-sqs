@@ -17,11 +17,6 @@ class QueueDoesNotExistException(QueueClientException):
 class QueueClient(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, group_id):
-        # type: (unicode) -> None
-        super(QueueClient, self).__init__()
-        self._group_id = group_id
-
     @abstractmethod
     def add_message(self, queue_name, msg, delay):
         # type: (unicode, unicode, int) -> None
