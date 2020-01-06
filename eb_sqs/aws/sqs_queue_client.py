@@ -17,19 +17,19 @@ class SqsQueueClient(QueueClient):
                                   )
         self.queue_cache = {}
 
-    def _get_queue(self, queue_name):
-        # type: (unicode) -> Any
-        queue_name = '{}{}'.format(settings.QUEUE_PREFIX, queue_name)
+    def _get_queue(self, queue_name, use_cache=True):
+        # type: (unicode, bool) -> Any
+        full_queue_name = '{}{}'.format(settings.QUEUE_PREFIX, queue_name)
 
-        queue = self._get_sqs_queue(queue_name)
+        queue = self._get_sqs_queue(full_queue_name, use_cache)
         if not queue:
-            queue = self._add_sqs_queue(queue_name)
+            queue = self._add_sqs_queue(full_queue_name)
 
         return queue
 
-    def _get_sqs_queue(self, queue_name):
-        # type: (unicode) -> Any
-        if self.queue_cache.get(queue_name):
+    def _get_sqs_queue(self, queue_name, use_cache):
+        # type: (unicode, bool) -> Any
+        if use_cache and self.queue_cache.get(queue_name):
             return self.queue_cache[queue_name]
 
         try:
@@ -62,9 +62,21 @@ class SqsQueueClient(QueueClient):
         # type: (unicode, unicode, int) -> None
         try:
             queue = self._get_queue(queue_name)
-            queue.send_message(
-                MessageBody=msg,
-                DelaySeconds=delay
-            )
+            try:
+                queue.send_message(
+                    MessageBody=msg,
+                    DelaySeconds=delay
+                )
+            except ClientError as ex:
+                if ex.response.get('Error', {}).get('Code', None) == 'AWS.SimpleQueueService.NonExistentQueue':
+                    queue = self._get_queue(queue_name, use_cache=False)
+                    queue.send_message(
+                        MessageBody=msg,
+                        DelaySeconds=delay
+                    )
+                else:
+                    raise ex
+        except QueueDoesNotExistException:
+            raise
         except Exception as ex:
             raise QueueClientException(ex)
