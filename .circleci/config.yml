@@ -24,9 +24,19 @@ jobs:
     steps:
       - add_ssh_keys
       - checkout
+      - restore_cache:
+            key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
       - run:
           name: Install dependencies
-          command: sudo pip install -r development.txt
+          command: |
+            sudo pip install pipenv
+            pipenv install -r development.txt
+      - save_cache:
+          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+          paths:
+            - "/usr/local/bin"
+            - "/usr/local/lib/python2.7/site-packages"
       - run:
           name: Run tests
-          command: python -m django test --settings=eb_sqs.test_settings
+          command: |
+            pipenv run python -m django test --settings=eb_sqs.test_settings
