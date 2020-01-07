@@ -13,7 +13,7 @@ jobs:
       - add_ssh_keys
       - checkout
       - run:
-          name: Run test
+          name: Run tests
           command: python -m django test --settings=eb_sqs.test_settings
   test-python-2:
     docker:
@@ -22,5 +22,5 @@ jobs:
       - add_ssh_keys
       - checkout
       - run:
-          name: Run test
+          name: Run tests
           command: python -m django test --settings=eb_sqs.test_settings
