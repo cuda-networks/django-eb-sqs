@@ -14,7 +14,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: pip install -r development.txt
+          command: sudo pip install -r development.txt
       - run:
           name: Run tests
           command: python -m django test --settings=eb_sqs.test_settings
@@ -26,7 +26,7 @@ jobs:
       - checkout
       - run:
           name: Install dependencies
-          command: pip install -r development.txt
+          command: sudo pip install -r development.txt
       - run:
           name: Run tests
           command: python -m django test --settings=eb_sqs.test_settings
