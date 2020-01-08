@@ -16,7 +16,8 @@ from eb_sqs.worker.queue_client import QueueDoesNotExistException
 class AwsQueueClientTest(TestCase):
     @mock_sqs()
     def test_add_message(self):
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs',
+                             region_name=settings.AWS_REGION)
         queue = sqs.create_queue(QueueName='eb-sqs-default')
 
         queue_client = SqsQueueClient()
@@ -29,7 +30,8 @@ class AwsQueueClientTest(TestCase):
     @mock_sqs()
     def test_add_message_delayed(self):
         delay = 1
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs',
+                             region_name=settings.AWS_REGION)
         queue = sqs.create_queue(QueueName='eb-sqs-default')
         queue_client = SqsQueueClient()
 
@@ -45,7 +47,8 @@ class AwsQueueClientTest(TestCase):
 
     @mock_sqs()
     def test_add_message_wrong_queue(self):
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs',
+                             region_name=settings.AWS_REGION)
         sqs.create_queue(QueueName='default')
         queue_client = SqsQueueClient()
 
@@ -58,7 +61,8 @@ class AwsQueueClientTest(TestCase):
 
         queue_name = 'test-queue'
 
-        sqs = boto3.resource('sqs')
+        sqs = boto3.resource('sqs',
+                             region_name=settings.AWS_REGION)
 
         queue_client = SqsQueueClient()
 
