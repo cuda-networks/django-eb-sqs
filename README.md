@@ -1,6 +1,6 @@
-## Django EB SQS - Background Tasks for Elastic Beanstalk and Amazon SQS
+## Django EB SQS - Background Tasks for Amazon SQS
 
-django-eb-sqs is a simple task manager for the Elastic Beanstalk Worker Tier. It uses SQS and the [boto3](https://github.com/boto/boto3) library.
+django-eb-sqs is a simple task manager for AWS SQS. It uses SQS and the [boto3](https://github.com/boto/boto3) library.
 
 ### Installation
 
@@ -75,8 +75,6 @@ This command can work with one or more queues, reading from the queues infinitel
 ```bash
 python manage.py process_queue --queues <comma-delimited list of queue names>
 ```
-
-This is a good idea for someone who wants to execute tasks without an Elastic Beanstalk worker.
 
 You can either use full queue names, or queue prefix using `prefix:*my_example_prefix*` notation.
 
