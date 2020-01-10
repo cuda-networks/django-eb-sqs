@@ -122,8 +122,5 @@ class Worker(object):
 
     def _execute_task(self, worker_task):
         # type: (WorkerTask) -> Any
-        try:
-            result = worker_task.execute()
-            return result
-        finally:
-            pass
+        result = worker_task.execute()
+        return result

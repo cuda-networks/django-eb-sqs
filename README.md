@@ -69,7 +69,7 @@ The retry call supports the `delay` and `execute_inline` arguments in order to d
 
 #### Executing Tasks
 
-Another way of executing tasks is to use the Django command `process_queue`.
+In order to execute tasks, use the Django command `process_queue`.
 This command can work with one or more queues, reading from the queues infinitely and executing tasks as they come-in.
 
 ```bash
