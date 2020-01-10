@@ -10,13 +10,12 @@ setup(
     package_dir={'eb_sqs': 'eb_sqs'},
     include_package_data=True,
     packages=find_packages(),
-    description='A SQS worker implementation for Elastic Beanstalk',
+    description='A simple task manager for AWS SQS',
     long_description=README,
     url='https://github.com/cuda-networks/django-eb-sqs',
     install_requires=[
         'boto3>=1.9.86',
         'Django>=1.10.6',
-        'redis>=2.10.5',
         'requests>=2.10.0',
     ]
 )
