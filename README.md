@@ -1,6 +1,6 @@
-## Django EB SQS - Background Tasks for Elastic Beanstalk and Amazon SQS
+## Django EB SQS - Background Tasks for Amazon SQS
 
-django-eb-sqs is a simple task manager for the Elastic Beanstalk Worker Tier. It uses SQS and the [boto3](https://github.com/boto/boto3) library.
+django-eb-sqs is a simple task manager for AWS SQS. It uses SQS and the [boto3](https://github.com/boto/boto3) library.
 
 ### Installation
 
@@ -69,41 +69,12 @@ The retry call supports the `delay` and `execute_inline` arguments in order to d
 
 #### Executing Tasks
 
-The Elastic Beanstalk Worker Tier sends all tasks to a API endpoint. django-eb-sqs has already such an endpoint which can be used by specifying the url mapping in your `urls.py` file.
-
-```python
-urlpatterns = [
-    ...
-    url(r'^worker/', include('eb_sqs.urls', namespace='eb_sqs'))
-]
-```
-
-In that case the relative endpoint url would be: `worker/process`
-
-Set this url in the Elastic Beanstalk Worker settings prior to deployment.
-
-During development you can use the included Django command to execute a small script which retrieves messages from SQS and posts them to this endpoint.
-
-```bash
-python manage.py run_eb_sqs_worker --url <absoulte endpoint url> --queue <queue-name>
-```
-
-For example:
-
-```bash
-python manage.py run_eb_sqs_worker --url http://127.0.0.1:80/worker/process --queue default
-```
-
-#### Executing Tasks without Elastic Beanstalk
-
-Another way of executing tasks is to use the Django command `process_queue`.
+In order to execute tasks, use the Django command `process_queue`.
 This command can work with one or more queues, reading from the queues infinitely and executing tasks as they come-in.
 
 ```bash
 python manage.py process_queue --queues <comma-delimited list of queue names>
 ```
-
-This is a good idea for someone who wants to execute tasks without an Elastic Beanstalk worker.
 
 You can either use full queue names, or queue prefix using `prefix:*my_example_prefix*` notation.
 
@@ -114,26 +85,6 @@ python manage.py process_queue --queues queue1,prefix:pr1-,queue2 # process queu
 ```
 
 Use the signals `MESSAGES_RECEIVED`, `MESSAGES_PROCESSED`, `MESSAGES_DELETED` of the `WorkerService` to get informed about the current SQS batch being processed by the management command.
-
-#### Group Tasks
-Multiple tasks can be grouped by specifying the `group_id` argument when calling `delay` on a task.
-If all tasks of a specific group are executed then the group callback task specified by `EB_SQS_GROUP_CALLBACK_TASK` is executed.
-
-Example calls:
-```python
-echo.delay(message='Hello World!', group_id='1')
-echo.delay(message='Hallo Welt!', group_id='1')
-echo.delay(message='Hola mundo!', group_id='1')
-```
-
-Example callback which is executed when all three tasks are finished:
-```python
-from eb_sqs.decorators import task
-
-@task(queue_name='test', max_retries=5)
-def group_finished(group_id):
-    pass
-```
 
 #### Auto Tasks
 

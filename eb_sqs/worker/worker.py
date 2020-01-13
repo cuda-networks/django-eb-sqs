@@ -1,13 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
-import importlib
 import logging
 import uuid
 
-from six import string_types
-
 from eb_sqs import settings
-from eb_sqs.worker.group_client import GroupClient
 from eb_sqs.worker.queue_client import QueueDoesNotExistException, QueueClient, QueueClientException
 from eb_sqs.worker.worker_exceptions import InvalidMessageFormatException, ExecutionFailedException, \
     MaxRetriesReachedException, InvalidQueueException, QueueException
@@ -17,11 +13,10 @@ logger = logging.getLogger("eb_sqs")
 
 
 class Worker(object):
-    def __init__(self, queue_client, group_client):
-        # type: (QueueClient, GroupClient) -> None
+    def __init__(self, queue_client):
+        # type: (QueueClient) -> None
         super(Worker, self).__init__()
         self.queue_client = queue_client
-        self.group_client = group_client
 
     def execute(self, msg, receive_count=1):
         # type: (unicode, int) -> Any
@@ -51,7 +46,6 @@ class Worker(object):
                     worker_task.retry_id,
                 )
 
-                self._remove_from_group(worker_task)
             else:
                 logger.debug(
                     'Execute task %s (%s, retry-id: %s) with args: %s and kwargs: %s',
@@ -99,8 +93,6 @@ class Worker(object):
                 if worker_task.retry >= worker_task.max_retries:
                     raise MaxRetriesReachedException(worker_task.retry)
 
-            self._add_to_group(worker_task)
-
             logger.debug('%s task %s (%s, retry-id: %s): %s, %s (%s%s)',
                          'Retrying' if is_retry else 'Delaying',
                          worker_task.abs_func_name,
@@ -117,10 +109,8 @@ class Worker(object):
                 self.queue_client.add_message(worker_task.queue, worker_task.serialize(), delay)
                 return None
         except QueueDoesNotExistException as ex:
-            self._remove_from_group(worker_task)
             raise InvalidQueueException(ex.queue_name)
         except QueueClientException as ex:
-            self._remove_from_group(worker_task)
             logger.warning('Task %s (%s, retry-id: %s) failed to enqueue to %s: %s',
                            worker_task.abs_func_name,
                            worker_task.id,
@@ -132,56 +122,5 @@ class Worker(object):
 
     def _execute_task(self, worker_task):
         # type: (WorkerTask) -> Any
-        try:
-            result = worker_task.execute()
-            return result
-        finally:
-            self._remove_from_group(worker_task)
-
-    def _add_to_group(self, worker_task):
-        # type: (WorkerTask) -> None
-        if worker_task.group_id:
-            logger.debug(
-                'Add task %s (%s, retry-id: %s) to group %s',
-                worker_task.abs_func_name,
-                worker_task.id,
-                worker_task.retry_id,
-                worker_task.group_id,
-            )
-
-            self.group_client.add(worker_task)
-
-    def _remove_from_group(self, worker_task):
-        # type: (WorkerTask) -> None
-        if worker_task.group_id:
-            logger.debug(
-                'Remove task %s (%s, retry-id: %s) from group %s',
-                worker_task.abs_func_name,
-                worker_task.id,
-                worker_task.retry_id,
-                worker_task.group_id,
-            )
-
-            if self.group_client.remove(worker_task):
-                self._execute_group_callback(worker_task)
-
-    @staticmethod
-    def _execute_group_callback(worker_task):
-        # type: (WorkerTask) -> None
-        if settings.GROUP_CALLBACK_TASK:
-            callback = settings.GROUP_CALLBACK_TASK
-
-            if isinstance(callback, string_types):
-                func_name = callback.split(".")[-1]
-                func_path = ".".join(callback.split(".")[:-1])
-                func_module = importlib.import_module(func_path)
-
-                callback = getattr(func_module, func_name)
-
-            logger.debug(
-                'All tasks in group %s finished. Trigger callback %s',
-                worker_task.group_id,
-                '{}.{}'.format(callback.__module__, callback.func_name),
-            )
-
-            callback.delay(worker_task.group_id)
+        result = worker_task.execute()
+        return result
