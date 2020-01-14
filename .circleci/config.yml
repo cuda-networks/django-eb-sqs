@@ -6,9 +6,6 @@ workflows:
        - test-python-3-7
        - test-python-2-7
        - bump-version:
-           filters:
-             branches:
-               only: /BNCASB-2204.*/
            requires:
              - test-python-3-7
              - test-python-2-7
@@ -40,6 +37,7 @@ jobs:
       - run:
           name: Update version number
           command: |
+            sudo apt-get install bc
             OLD_VER=$(cat VERSION) && NEW_VER=$(echo $OLD_VER + .01 | bc) && echo $NEW_VER > VERSION
             echo $OLD_VER
             echo $NEW_VER
