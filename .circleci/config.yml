@@ -5,10 +5,6 @@ workflows:
      jobs:
        - test-python-3-7
        - test-python-2-7
-       - bump-version:
-           requires:
-             - test-python-3-7
-             - test-python-2-7
 jobs:
   test-python-3-7: &test-template
     docker:
@@ -28,21 +24,3 @@ jobs:
     <<: *test-template
     docker:
       - image: circleci/python:2.7.16
-  bump-version:
-    docker:
-      - image: circleci/python:3.7.6
-    steps:
-      - add_ssh_keys
-      - checkout
-      - run:
-          name: Update version number
-          command: |
-            sudo apt-get install bc
-            OLD_VER=$(cat VERSION) && NEW_VER=$(echo $OLD_VER + .01 | bc) && echo $NEW_VER > VERSION
-            echo $OLD_VER
-            echo $NEW_VER
-            cat VERSION
-      - run:
-          name: Push to GitHub
-          command: |
-            echo "pushing to github..."

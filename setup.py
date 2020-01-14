@@ -6,7 +6,7 @@ VERSION = open(os.path.join(here, 'VERSION')).read()
 README = open(os.path.join(here, 'README.md')).read()
 
 setup(
-    name='django-task-sqs',
+    name='django-eb-sqs',
     version=VERSION,
     package_dir={'eb_sqs': 'eb_sqs'},
     include_package_data=True,
