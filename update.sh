@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo "Usage: $0 [option] ...
       -u or --update  : update the version and commit to Github
       -p or --publish : publish the package to PyPI
