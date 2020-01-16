@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 function log()
 {
   echo "$(date): $1"
@@ -70,19 +72,19 @@ function publish()
 
 # Parse and handle command line options
 while getopts ":u:p:" OPTION; do
-	case $OPTION in
-	u)
-		VERSION_PARAM=$OPTARG
-		update
-		;;
-	p)
-	  TAG_PARAM=$OPTARG
-		publish
-		;;
-	*)
-	  usage
-		;;
-	esac
+  case $OPTION in
+  u)
+    VERSION_PARAM=$OPTARG
+    update
+    ;;
+  p)
+    TAG_PARAM=$OPTARG
+    publish
+    ;;
+  *)
+    usage
+    ;;
+  esac
 done
 
 # if no args specified
