@@ -1,5 +1,5 @@
 
-[![PyPI version](https://img.shields.io/pypi/v/django-eb-sqs)](https://img.shields.io/pypi/v/django-eb-sqs)
+[![PyPI version](https://img.shields.io/pypi/v/django-eb-sqs)](https://pypi.org/project/django-eb-sqs/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CircleCI](https://img.shields.io/circleci/build/github/cuda-networks/django-eb-sqs/master)](https://circleci.com/gh/cuda-networks/django-eb-sqs/tree/master)
 
