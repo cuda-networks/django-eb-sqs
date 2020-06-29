@@ -1,19 +1,14 @@
-version: 2.1
-
-executors:
-  python2:
-    docker:
-      - image: circleci/python:2.7.16
-  python3:
+version: 2
+workflows:
+   version: 2
+   eb-sqs-jobs:
+     jobs:
+       - test-python-3-7
+       - test-python-2-7
+jobs:
+  test-python-3-7: &test-template
     docker:
       - image: circleci/python:3.7.6
-
-jobs:
-  test:
-    parameters:
-      exec:
-        type: executor
-    executor: << parameters.exec >>
     steps:
       - add_ssh_keys
       - checkout
@@ -25,12 +20,7 @@ jobs:
           name: Run tests
           command: |
             python -m django test --settings=eb_sqs.test_settings
-
-workflows:
-  version: 2
-  eb-sqs-jobs:
-    jobs:
-      - test:
-          exec: python2
-      - test:
-          exec: python3
+  test-python-2-7:
+    <<: *test-template
+    docker:
+      - image: circleci/python:2.7.16
