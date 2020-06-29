@@ -13,7 +13,7 @@ jobs:
     parameters:
       exec:
         type: executor
-      executor: << parameters.exec >>
+    executor: << parameters.exec >>
     steps:
       - add_ssh_keys
       - checkout
