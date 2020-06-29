@@ -10,3 +10,7 @@
 # Ignore EGG files
 *.egg-info
 *.egg
+
+# Ignore built files for PyPi
+build/
+dist/
