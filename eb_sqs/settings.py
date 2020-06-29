@@ -9,8 +9,8 @@ WAIT_TIME_S = getattr(settings, 'EB_SQS_WAIT_TIME_S', 2)  # type: int
 NO_QUEUES_WAIT_TIME_S = getattr(settings, 'NO_QUEUES_WAIT_TIME_S', 5)  # type: int
 
 AUTO_ADD_QUEUE = getattr(settings, 'EB_SQS_AUTO_ADD_QUEUE', False)  # type: bool
-QUEUE_PREFIX = getattr(settings, 'EB_SQS_QUEUE_PREFIX', 'eb-sqs-')  # type: str
-DEFAULT_QUEUE = getattr(settings, 'EB_SQS_DEFAULT_QUEUE', 'default')  # type: str
+QUEUE_PREFIX = getattr(settings, 'EB_SQS_QUEUE_PREFIX', '')  # type: str
+DEFAULT_QUEUE = getattr(settings, 'EB_SQS_DEFAULT_QUEUE', 'eb-sqs-default')  # type: str
 
 EXECUTE_INLINE = getattr(settings, 'EB_SQS_EXECUTE_INLINE', False)  # type: bool
 FORCE_SERIALIZATION = getattr(settings, 'EB_SQS_FORCE_SERIALIZATION', False)  # type: bool
@@ -20,13 +20,6 @@ DEFAULT_MAX_RETRIES = getattr(settings, 'EB_SQS_DEFAULT_MAX_RETRIES', 0)  # type
 DEFAULT_COUNT_RETRIES = getattr(settings, 'EB_SQS_DEFAULT_COUNT_RETRIES', True)  # type: bool
 
 USE_PICKLE = getattr(settings, 'EB_SQS_USE_PICKLE', False)  # type: bool
-
-GROUP_CALLBACK_TASK = getattr(settings, 'EB_SQS_GROUP_CALLBACK_TASK', None)  # type: Any
-
-REDIS_CLIENT = getattr(settings, 'EB_SQS_REDIS_CLIENT', None)  # type: StrictRedis
-# default: 7 days
-REDIS_EXPIRY = getattr(settings, 'EB_SQS_REDIS_EXPIRY', 3600 * 24 * 7)  # type: int
-REDIS_KEY_PREFIX = getattr(settings, 'EB_SQS_REDIS_KEY_PREFIX', 'eb-sqs-')  # type: str
 
 WORKER_FACTORY = getattr(settings, 'EB_SQS_WORKER_FACTORY', None)  # type: WorkerFactory
 

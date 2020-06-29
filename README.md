@@ -36,7 +36,7 @@ echo.delay(message='Hello World!')
 ```
 **NOTE:** This assumes that you have your AWS keys in the appropriate environment variables, or are using IAM roles. Consult the `boto3` [documentation](https://boto3.readthedocs.org/en/latest/) for further info.
 
-If you don't pass a queue name, the `EB_SQS_DEFAULT_QUEUE` setting is used. If not set, the queue name is `default`.
+If you don't pass a queue name, the `EB_SQS_DEFAULT_QUEUE` setting is used. If not set, the queue name is `eb-sqs-default`.
 
 Additionally the task decorator supports `max_retries` (default `0`) and `use_pickle` (default `False`) attributes for advanced control task execution.
 
@@ -98,6 +98,8 @@ This makes the code much simpler, and allows using classes to invoke your method
 
 This is how you would define your class:
 ```python
+from eb_sqs.auto_tasks.service import AutoTaskService
+
 class MyService:
     def __init__(self, p1=default1, ..., pN=defaultN, auto_task_service=None):
         self._auto_task_service = auto_task_service or AutoTaskService()
@@ -132,14 +134,10 @@ The following settings can be used to fine tune django-eb-sqs. Copy them into yo
 - EB_SQS_DEFAULT_DELAY (`0`): Default task delay time in seconds.
 - EB_SQS_DEFAULT_MAX_RETRIES (`0`): Default retry limit for all tasks.
 - EB_SQS_DEFAULT_COUNT_RETRIES (`True`): Count retry calls. Needed if max retries check shall be executed.
-- EB_SQS_DEFAULT_QUEUE (`default`): Default queue name if none is specified when creating a task.
+- EB_SQS_DEFAULT_QUEUE (`eb-sqs-default`): Default queue name if none is specified when creating a task.
 - EB_SQS_EXECUTE_INLINE (`False`): Execute tasks immediately without using SQS. Useful during development. Global setting `True` will override setting it on a task level.
 - EB_SQS_FORCE_SERIALIZATION (`False`): Forces serialization of tasks when executed `inline`. This setting is helpful during development to see if all arguments are serialized and deserialized properly.
-- EB_SQS_GROUP_CALLBACK_TASK (`None`): Group callback (String or Function). Must be a valid task.
-- EB_SQS_QUEUE_PREFIX (`eb-sqs-`): Prefix to use for the queues. The prefix is added to the queue name.
-- EB_SQS_REDIS_CLIENT (`None`): Set the Redis connection client (`StrictRedis`)
-- EB_SQS_REDIS_EXPIRY (`604800`): Default expiry time in seconds until a group is removed
-- EB_SQS_REDIS_KEY_PREFIX (`eb-sqs-`): Prefix used for all Redis keys
+- EB_SQS_QUEUE_PREFIX (``): Prefix to use for the queues. The prefix is added to the queue name.
 - EB_SQS_USE_PICKLE (`False`): Enable to use `pickle` to serialize task parameters. Uses `json` as default.
 - EB_SQS_AWS_MAX_RETRIES (`30`): Default retry limit on a boto3 call to AWS SQS.
 - EB_SQS_REFRESH_PREFIX_QUEUES_S (`10`): Minimal number of seconds to wait between refreshing queue list, in case prefix is used

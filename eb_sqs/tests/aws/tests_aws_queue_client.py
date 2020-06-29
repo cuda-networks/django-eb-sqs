@@ -14,6 +14,9 @@ from eb_sqs.worker.queue_client import QueueDoesNotExistException
 
 
 class AwsQueueClientTest(TestCase):
+    def setUp(self):
+        settings.QUEUE_PREFIX = 'eb-sqs-'
+
     @mock_sqs()
     def test_add_message(self):
         sqs = boto3.resource('sqs',
