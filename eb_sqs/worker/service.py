@@ -104,11 +104,11 @@ class WorkerService(object):
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
-                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=1)
+                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=True)
                 else:
-                    logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
+                    logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
             except Exception as exc:
-                logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=1)
+                logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
 
     def delete_messages(self, queue, msg_entries):
         # type: (Queue, list) -> None
@@ -140,7 +140,12 @@ class WorkerService(object):
         try:
             receive_count = int(msg.attributes[self._RECEIVE_COUNT_ATTRIBUTE])
 
-            worker.execute(msg.body, receive_count)
+            if receive_count > 1:
+                logger.warning('[django-eb-sqs] SQS re-queued message {} times - msg: {}'.format(
+                    receive_count, msg.body
+                ))
+
+            worker.execute(msg.body)
 
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except ExecutionFailedException as exc:
@@ -153,7 +158,7 @@ class WorkerService(object):
             with django_db_management():
                 function()
         except Exception as exc:
-            logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=1)
+            logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=True)
 
     def get_queues_by_names(self, sqs, queue_names):
         # type: (ServiceResource, list) -> list

@@ -73,7 +73,7 @@ class WorkerTest(TestCase):
     def test_worker_execution(self):
         msg = '{"id": "id-1", "retry": 0, "queue": "default", "maxRetries": 5, "args": [], "func": "eb_sqs.tests.worker.tests_worker.dummy_task", "kwargs": {"msg": "Hello World!"}}'
 
-        result = self.worker.execute(msg, 2)
+        result = self.worker.execute(msg)
 
         self.assertEqual(result, 'Hello World!')
 
