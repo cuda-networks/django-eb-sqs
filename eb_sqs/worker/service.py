@@ -44,9 +44,6 @@ class WorkerService(object):
         static_queues = queues
         last_update_time = timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S)
 
-        self.write_healthcheck_file()
-        last_healthcheck_time = timezone.now()
-
         logger.debug('[django-eb-sqs] Connected to SQS: {}'.format(', '.join(queue_names)))
 
         worker = WorkerFactory.default().create()
@@ -75,11 +72,11 @@ class WorkerService(object):
             else:
                 self.process_messages(queues, worker, static_queues)
 
-            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > last_healthcheck_time:
-                self.write_healthcheck_file()
-                last_healthcheck_time = timezone.now()
-
     def process_messages(self, queues, worker, static_queues):
+
+        self.write_healthcheck_file()
+        last_healthcheck_time = timezone.now()
+
         # type: (list, Worker, list) -> None
         for queue in queues:
             try:
@@ -101,6 +98,10 @@ class WorkerService(object):
                 self.delete_messages(queue, msg_entries)
 
                 self._send_signal(MESSAGES_DELETED, messages=messages)
+
+                if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > last_healthcheck_time:
+                    self.write_healthcheck_file()
+                    last_healthcheck_time = timezone.now()
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
