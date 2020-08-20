@@ -29,6 +29,8 @@ class WorkerService(object):
 
     def process_queues(self, queue_names):
         # type: (list) -> None
+        self.write_healthcheck_file()
+
         logger.debug('[django-eb-sqs] Connecting to SQS: {}'.format(', '.join(queue_names)))
 
         sqs = boto3.resource(
@@ -73,11 +75,9 @@ class WorkerService(object):
                 self.process_messages(queues, worker, static_queues)
 
     def process_messages(self, queues, worker, static_queues):
-
-        self.write_healthcheck_file()
+        # type: (list, Worker, list) -> None
         last_healthcheck_time = timezone.now()
 
-        # type: (list, Worker, list) -> None
         for queue in queues:
             try:
                 messages = self.poll_messages(queue)
