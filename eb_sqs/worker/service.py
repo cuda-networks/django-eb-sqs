@@ -69,10 +69,7 @@ class WorkerService(object):
         logger.info('[django-eb-sqs] DEFAULT_MAX_RETRIES = {}'.format(settings.DEFAULT_MAX_RETRIES))
         logger.info('[django-eb-sqs] REFRESH_PREFIX_QUEUES_S = {}'.format(settings.REFRESH_PREFIX_QUEUES_S))
 
-        while True:
-            if self._exit_gracefully:
-                break
-
+        while not self._exit_gracefully:
             if len(queue_prefixes) > 0 and \
                     timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S) > last_update_time:
                 queues = static_queues + self.get_queues_by_prefixes(sqs, queue_prefixes)
