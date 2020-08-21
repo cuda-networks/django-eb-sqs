@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import signal
 from datetime import timedelta
 from time import sleep
 
@@ -27,10 +28,18 @@ class WorkerService(object):
     _PREFIX_STR = 'prefix:'
     _RECEIVE_COUNT_ATTRIBUTE = 'ApproximateReceiveCount'
 
+    def __init__(self):
+        # type: () -> None
+        self._exit_gracefully = False
+        self._last_healthcheck_time = None
+
     def process_queues(self, queue_names):
         # type: (list) -> None
+        signal.signal(signal.SIGTERM, self._exit_called)
+        signal.signal(signal.SIGKILL, self._exit_called)
+
         self.write_healthcheck_file()
-        self.last_healthcheck_time = timezone.now()
+        self._last_healthcheck_time = timezone.now()
 
         logger.debug('[django-eb-sqs] Connecting to SQS: {}'.format(', '.join(queue_names)))
 
@@ -61,6 +70,9 @@ class WorkerService(object):
         logger.info('[django-eb-sqs] REFRESH_PREFIX_QUEUES_S = {}'.format(settings.REFRESH_PREFIX_QUEUES_S))
 
         while True:
+            if self._exit_gracefully:
+                break
+
             if len(queue_prefixes) > 0 and \
                     timezone.now() - timedelta(seconds=settings.REFRESH_PREFIX_QUEUES_S) > last_update_time:
                 queues = static_queues + self.get_queues_by_prefixes(sqs, queue_prefixes)
@@ -79,6 +91,9 @@ class WorkerService(object):
         # type: (list, Worker, list) -> None
 
         for queue in queues:
+            if self._exit_gracefully:
+                return
+
             try:
                 messages = self.poll_messages(queue)
                 logger.debug('[django-eb-sqs] Polled {} messages'.format(len(messages)))
@@ -98,10 +113,6 @@ class WorkerService(object):
                 self.delete_messages(queue, msg_entries)
 
                 self._send_signal(MESSAGES_DELETED, messages=messages)
-
-                if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self.last_healthcheck_time:
-                    self.write_healthcheck_file()
-                    self.last_healthcheck_time = timezone.now()
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
@@ -110,6 +121,10 @@ class WorkerService(object):
                     logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
+
+            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self._last_healthcheck_time:
+                self.write_healthcheck_file()
+                self._last_healthcheck_time = timezone.now()
 
     def delete_messages(self, queue, msg_entries):
         # type: (Queue, list) -> None
@@ -130,10 +145,10 @@ class WorkerService(object):
             AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE]
         )
 
-    def _send_signal(self, signal, messages):
+    def _send_signal(self, dispatch_signal, messages):
         # type: (django.dispatch.Signal, list) -> None
-        if signal.has_listeners(sender=self.__class__):
-            self._execute_user_code(lambda: signal.send(sender=self.__class__, messages=messages))
+        if dispatch_signal.has_listeners(sender=self.__class__):
+            self._execute_user_code(lambda: dispatch_signal.send(sender=self.__class__, messages=messages))
 
     def _process_message(self, msg, worker):
         # type: (Message, Worker) -> None
@@ -178,3 +193,6 @@ class WorkerService(object):
         # type: () -> None
         with open(settings.HEALTHCHECK_FILE_NAME, 'w') as file:
             file.write(timezone.now().isoformat())
+
+    def _exit_called(self):
+        self._exit_gracefully = True
