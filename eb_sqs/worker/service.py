@@ -35,12 +35,8 @@ class WorkerService(object):
 
     def process_queues(self, queue_names):
         # type: (list) -> None
-        def termination_handler(signum, frame):
-            logger.info('[django-eb-sqs] Termination signal called: {}'.format(signum))
-            self._exit_called()
-
-        signal.signal(signal.SIGTERM, termination_handler)
-        signal.signal(signal.SIGKILL, termination_handler)
+        signal.signal(signal.SIGTERM, self._exit_called)
+        signal.signal(signal.SIGKILL, self._exit_called)
 
         self.write_healthcheck_file()
         self._last_healthcheck_time = timezone.now()
@@ -195,5 +191,6 @@ class WorkerService(object):
         with open(settings.HEALTHCHECK_FILE_NAME, 'w') as file:
             file.write(timezone.now().isoformat())
 
-    def _exit_called(self):
+    def _exit_called(self, signum, frame):
+        logger.info('[django-eb-sqs] Termination signal called: {}'.format(signum))
         self._exit_gracefully = True
