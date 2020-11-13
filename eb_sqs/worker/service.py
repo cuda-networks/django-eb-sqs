@@ -36,7 +36,6 @@ class WorkerService(object):
     def process_queues(self, queue_names):
         # type: (list) -> None
         signal.signal(signal.SIGTERM, self._exit_called)
-        signal.signal(signal.SIGKILL, self._exit_called)
 
         self.write_healthcheck_file()
         self._last_healthcheck_time = timezone.now()
