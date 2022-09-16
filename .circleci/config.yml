@@ -12,7 +12,7 @@ jobs:
       - add_ssh_keys
       - checkout
       - run:
-          name: Install dependencies
+          name: Install dependencies8
           command: |
             sudo pip install -r development.txt
       - run:
