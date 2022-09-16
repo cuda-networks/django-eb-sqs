@@ -34,7 +34,7 @@ TEMPLATES = [
     },
 ]
 
-ROOT_URLCONF = 'eb_sqs.urls'
+# ROOT_URLCONF = 'eb_sqs.urls'
 
 LOGGING = {
     'version': 1,
