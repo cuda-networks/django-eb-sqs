@@ -12,10 +12,13 @@ jobs:
       - add_ssh_keys
       - checkout
       - run:
-          name: Install dependencies
+          name: Install pip packages
           command: |
-            sudo pip install -r development.txt
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r development.txt
       - run:
           name: Run tests
           command: |
+            . venv/bin/activate
             python -m django test --settings=eb_sqs.test_settings
