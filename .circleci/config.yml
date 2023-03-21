@@ -7,7 +7,7 @@ workflows:
 jobs:
   test-python-3-9: &test-template
     docker:
-      - image: circleci/python:3.9.16
+      - image: cimg/python:3.9.16
     steps:
       - add_ssh_keys
       - checkout
