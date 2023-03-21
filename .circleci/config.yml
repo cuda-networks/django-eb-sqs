@@ -3,12 +3,11 @@ workflows:
    version: 2
    eb-sqs-jobs:
      jobs:
-       - test-python-3-7
-       - test-python-2-7
+       - test-python-3-9
 jobs:
-  test-python-3-7: &test-template
+  test-python-3-9: &test-template
     docker:
-      - image: circleci/python:3.7.6
+      - image: circleci/python:3.9.16
     steps:
       - add_ssh_keys
       - checkout
@@ -20,7 +19,3 @@ jobs:
           name: Run tests
           command: |
             python -m django test --settings=eb_sqs.test_settings
-  test-python-2-7:
-    <<: *test-template
-    docker:
-      - image: circleci/python:2.7.16
