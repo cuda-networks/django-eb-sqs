@@ -22,8 +22,7 @@ setup(
     ],
     classifiers=[
         'Intended Audience :: Developers',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.9',
         'Topic :: Software Development',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',

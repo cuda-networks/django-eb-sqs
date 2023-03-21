@@ -19,9 +19,9 @@ from eb_sqs.worker.worker_factory import WorkerFactory
 
 logger = logging.getLogger(__name__)
 
-MESSAGES_RECEIVED = django.dispatch.Signal(providing_args=['messages'])
-MESSAGES_PROCESSED = django.dispatch.Signal(providing_args=['messages'])
-MESSAGES_DELETED = django.dispatch.Signal(providing_args=['messages'])
+MESSAGES_RECEIVED = django.dispatch.Signal()
+MESSAGES_PROCESSED = django.dispatch.Signal()
+MESSAGES_DELETED = django.dispatch.Signal()
 
 
 class WorkerService(object):
