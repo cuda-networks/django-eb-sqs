@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import uuid
+from typing import Any
 
 from eb_sqs import settings
 from eb_sqs.worker.queue_client import QueueDoesNotExistException, QueueClient, QueueClientException
@@ -13,13 +14,11 @@ logger = logging.getLogger("eb_sqs")
 
 
 class Worker(object):
-    def __init__(self, queue_client):
-        # type: (QueueClient) -> None
+    def __init__(self, queue_client: QueueClient):
         super(Worker, self).__init__()
         self.queue_client = queue_client
 
-    def execute(self, msg):
-        # type: (unicode) -> Any
+    def execute(self, msg: str) -> Any:
         try:
             worker_task = WorkerTask.deserialize(msg)
         except Exception as ex:
@@ -69,19 +68,19 @@ class Worker(object):
 
             raise ExecutionFailedException(worker_task.abs_func_name, ex)
 
-    def delay(self, group_id, queue_name, func, args, kwargs, max_retries, use_pickle, delay, execute_inline):
-        # type: (unicode, unicode, Any, tuple, dict, int, bool, int, bool) -> Any
-        worker_task = WorkerTask(str(uuid.uuid4()), group_id, queue_name, func, args, kwargs, max_retries, 0, None, use_pickle)
+    def delay(self, group_id: str, queue_name: str, func, args: tuple, kwargs: dict, max_retries: int, use_pickle: bool,
+              delay: int, execute_inline: bool) -> Any:
+        worker_task = WorkerTask(str(uuid.uuid4()), group_id, queue_name, func, args, kwargs, max_retries, 0, None,
+                                 use_pickle)
         return self._enqueue_task(worker_task, delay, execute_inline, False, True)
 
-    def retry(self, worker_task, delay, execute_inline, count_retries):
-        # type: (WorkerTask, int, bool, bool) -> Any
+    def retry(self, worker_task: WorkerTask, delay: int, execute_inline: bool, count_retries: bool) -> Any:
         worker_task = worker_task.copy(settings.FORCE_SERIALIZATION)
         worker_task.retry_id = str(uuid.uuid4())
         return self._enqueue_task(worker_task, delay, execute_inline, True, count_retries)
 
-    def _enqueue_task(self, worker_task, delay, execute_inline, is_retry, count_retries):
-        # type: (WorkerTask, int, bool, bool, bool) -> Any
+    def _enqueue_task(self, worker_task: WorkerTask, delay: int, execute_inline: bool, is_retry: bool,
+                      count_retries: bool) -> Any:
         try:
             if is_retry and count_retries:
                 worker_task.retry += 1
@@ -116,7 +115,6 @@ class Worker(object):
             raise QueueException()
 
     @classmethod
-    def _execute_task(cls, worker_task):
-        # type: (WorkerTask) -> Any
+    def _execute_task(cls, worker_task: WorkerTask) -> Any:
         result = worker_task.execute()
         return result

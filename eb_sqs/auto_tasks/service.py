@@ -24,7 +24,8 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
         class_ = getattr(module, class_name)  # find class
 
         auto_task_executor_service = _AutoTaskExecutorService(func_name)
-        instance = class_(auto_task_service=auto_task_executor_service)  # instantiate class using _AutoTaskExecutorService
+        instance = class_(
+            auto_task_service=auto_task_executor_service)  # instantiate class using _AutoTaskExecutorService
 
         executor_func_name = auto_task_executor_service.get_executor_func_name()
         if executor_func_name:
@@ -54,12 +55,12 @@ def _auto_task_wrapper(module_name, class_name, func_name, *args, **kwargs):
                 exc.max_retries_func()
             else:
                 # by default log an error
-                logger.error('Reached max retries in auto task {}.{}.{} with error: {}'.format(module_name, class_name, func_name, repr(exc)))
+                logger.error('Reached max retries in auto task {}.{}.{} with error: {}'.format(module_name, class_name,
+                                                                                               func_name, repr(exc)))
 
 
 class AutoTaskService(object):
-    def register_task(self, method, queue_name=None, max_retries=None):
-        # type: (Any, str, int) -> None
+    def register_task(self, method, queue_name: str = None, max_retries: int = None):
         instance = method.__self__
         class_ = instance.__class__
         func_name = method.__name__
@@ -82,14 +83,12 @@ class AutoTaskService(object):
 
 
 class _AutoTaskExecutorService(AutoTaskService):
-    def __init__(self, func_name):
-        # type: (str) -> None
+    def __init__(self, func_name: str):
         self._func_name = func_name
 
         self._executor_func_name = None
 
-    def register_task(self, method, queue_name=None, max_retries=None):
-        # type: (Any, str, int) -> None
+    def register_task(self, method, queue_name: str = None, max_retries: int = None):
         if self._func_name == method.__name__:
             # circuit breaker to allow actually executing the method once
             instance = method.__self__
@@ -99,6 +98,5 @@ class _AutoTaskExecutorService(AutoTaskService):
 
         super(_AutoTaskExecutorService, self).register_task(method, queue_name, max_retries)
 
-    def get_executor_func_name(self):
-        # type: () -> str
+    def get_executor_func_name(self) -> str:
         return self._executor_func_name

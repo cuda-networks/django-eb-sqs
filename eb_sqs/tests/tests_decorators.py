@@ -11,19 +11,18 @@ from eb_sqs.worker.worker_factory import WorkerFactory
 
 
 @task()
-def dummy_task(msg):
-    # type: (unicode) -> None
+def dummy_task(msg: str):
     if not msg:
         raise Exception('No message')
 
+
 @task(queue_name='CustomQueue')
 def dummy_task_custom_queue():
-    # type: (unicode) -> None
     pass
 
+
 @task()
-def dummy_retry_task(msg):
-    # type: (unicode) -> None
+def dummy_retry_task(msg: str):
     if dummy_retry_task.retry_num == 0:
         dummy_retry_task.retry()
     else:
