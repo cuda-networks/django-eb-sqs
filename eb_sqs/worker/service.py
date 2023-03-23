@@ -7,8 +7,6 @@ from time import sleep
 from typing import Any
 
 import boto3
-from boto.sqs.message import Message
-from boto.sqs.queue import Queue
 from boto3.resources.base import ServiceResource
 
 from botocore.config import Config
@@ -102,8 +100,8 @@ class WorkerService(object):
                 for msg in messages:
                     self._execute_user_code(lambda: self._process_message(msg, worker))
                     msg_entries.append({
-                            'Id': msg.message_id,
-                            'ReceiptHandle': msg.receipt_handle
+                        'Id': msg.message_id,
+                        'ReceiptHandle': msg.receipt_handle
                     })
 
                 self._send_signal(MESSAGES_PROCESSED, messages=messages)
@@ -114,17 +112,19 @@ class WorkerService(object):
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
-                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=True)
+                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc),
+                                 exc_info=True)
                 else:
                     logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
 
-            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self._last_healthcheck_time:
+            if timezone.now() - timedelta(
+                    seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self._last_healthcheck_time:
                 self.write_healthcheck_file()
                 self._last_healthcheck_time = timezone.now()
 
-    def delete_messages(self, queue: Queue, msg_entries: list):
+    def delete_messages(self, queue, msg_entries: list):
         if len(msg_entries) > 0:
             response = queue.delete_messages(Entries=msg_entries)
 
@@ -134,7 +134,7 @@ class WorkerService(object):
             if num_failed > 0:
                 logger.warning('[django-eb-sqs] Failed deleting {} messages: {}'.format(num_failed, failed))
 
-    def poll_messages(self, queue: Queue) -> list:
+    def poll_messages(self, queue) -> list:
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
@@ -145,7 +145,7 @@ class WorkerService(object):
         if dispatch_signal.has_listeners(sender=self.__class__):
             self._execute_user_code(lambda: dispatch_signal.send(sender=self.__class__, messages=messages))
 
-    def _process_message(self, msg: Message, worker: Worker):
+    def _process_message(self, msg, worker: Worker):
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
             receive_count = int(msg.attributes[self._RECEIVE_COUNT_ATTRIBUTE])
