@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from contextlib import contextmanager
 
 from django.db import reset_queries, close_old_connections

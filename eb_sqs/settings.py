@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from django.conf import settings
 
 AWS_REGION = getattr(settings, 'EB_AWS_REGION', 'us-east-1')  # type: str

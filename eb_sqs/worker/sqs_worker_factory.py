@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from eb_sqs.aws.sqs_queue_client import SqsQueueClient
 from eb_sqs.worker.worker import Worker
 from eb_sqs.worker.worker_factory import WorkerFactory
