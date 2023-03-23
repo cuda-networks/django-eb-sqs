@@ -72,10 +72,12 @@ class WorkerTask(object):
                 self.use_pickle,
             )
 
-    def _pickle_args(self, args: Any) -> str:
+    @staticmethod
+    def _pickle_args(args: Any) -> str:
         return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL)).decode('utf-8')
 
-    def deserialize(self, msg: str):
+    @staticmethod
+    def deserialize(msg: str):
         task = json.loads(msg)
 
         id = task.get('id', str(uuid.uuid4()))
