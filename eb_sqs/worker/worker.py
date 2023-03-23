@@ -68,7 +68,7 @@ class Worker(object):
 
             raise ExecutionFailedException(worker_task.abs_func_name, ex)
 
-    def delay(self, group_id: str, queue_name: str, func, args: tuple, kwargs: dict, max_retries: int, use_pickle: bool,
+    def delay(self, group_id: str, queue_name: str, func: Any, args: tuple, kwargs: dict, max_retries: int, use_pickle: bool,
               delay: int, execute_inline: bool) -> Any:
         worker_task = WorkerTask(str(uuid.uuid4()), group_id, queue_name, func, args, kwargs, max_retries, 0, None,
                                  use_pickle)

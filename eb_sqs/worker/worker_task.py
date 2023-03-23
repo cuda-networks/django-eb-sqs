@@ -15,7 +15,7 @@ except Exception:
 
 
 class WorkerTask(object):
-    def __init__(self, id: str, group_id: str, queue: str, func: str, args: Any, kwargs: tuple, max_retries: dict, retry: int, retry_id: str, use_pickle: bool):
+    def __init__(self, id: str, group_id: str, queue: str, func: Any, args: tuple, kwargs: dict, max_retries: int, retry: int, retry_id: str, use_pickle: bool):
         super(WorkerTask, self).__init__()
         self.id = id
         self.group_id = group_id
@@ -41,22 +41,21 @@ class WorkerTask(object):
         kwargs = WorkerTask._pickle_args(self.kwargs) if self.use_pickle else self.kwargs
 
         task = {
-                'id': self.id,
-                'groupId': self.group_id,
-                'queue': self.queue,
-                'func': self.abs_func_name,
-                'args': args,
-                'kwargs': kwargs,
-                'maxRetries': self.max_retries,
-                'retry': self.retry,
-                'retryId': self.retry_id,
-                'pickle': self.use_pickle,
-            }
+            'id': self.id,
+            'groupId': self.group_id,
+            'queue': self.queue,
+            'func': self.abs_func_name,
+            'args': args,
+            'kwargs': kwargs,
+            'maxRetries': self.max_retries,
+            'retry': self.retry,
+            'retryId': self.retry_id,
+            'pickle': self.use_pickle,
+        }
 
         return json.dumps(task)
 
-    def copy(self, use_serialization):
-        # type: (bool) -> WorkerTask
+    def copy(self, use_serialization: bool):
         if use_serialization:
             return WorkerTask.deserialize(self.serialize())
         else:
@@ -73,12 +72,10 @@ class WorkerTask(object):
                 self.use_pickle,
             )
 
-    @staticmethod
-    def _pickle_args(args: Any) -> str:
+    def _pickle_args(self, args: Any) -> str:
         return base64.b64encode(pickle.dumps(args, pickle.HIGHEST_PROTOCOL)).decode('utf-8')
 
-    @staticmethod
-    def deserialize(msg: str):
+    def deserialize(self, msg: str) -> WorkerTask:
         task = json.loads(msg)
 
         id = task.get('id', str(uuid.uuid4()))

@@ -1,5 +1,8 @@
+from typing import Any
+
+
 class RetryableTaskException(Exception):
-    def __init__(self, inner: Exception, delay: int = None, count_retries: bool = None, max_retries_func=None):
+    def __init__(self, inner: Exception, delay: int = None, count_retries: bool = None, max_retries_func: Any = None):
         self._inner = inner
 
         self.delay = delay

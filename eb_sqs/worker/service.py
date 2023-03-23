@@ -169,7 +169,7 @@ class WorkerService(object):
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=True)
 
-    def get_queues_by_names(self, sqs: ServiceResource, queue_names: list):
+    def get_queues_by_names(self, sqs: ServiceResource, queue_names: list) -> list:
         return [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
     def get_queues_by_prefixes(self, sqs: ServiceResource, prefixes: list) -> list:
