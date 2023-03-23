@@ -6,12 +6,7 @@ from eb_sqs import settings
 from eb_sqs.worker.worker import Worker
 
 
-class WorkerFactory(object):
-    __metaclass__ = ABCMeta
-
-    def __init__(self):
-        super(WorkerFactory, self).__init__()
-
+class WorkerFactory(metaclass=ABCMeta):
     @abstractmethod
     def create(self) -> Worker:
         pass

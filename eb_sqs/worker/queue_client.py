@@ -13,8 +13,7 @@ class QueueDoesNotExistException(QueueClientException):
         self.queue_name = queue_name
 
 
-class QueueClient(object):
-    __metaclass__ = ABCMeta
+class QueueClient(metaclass=ABCMeta):
 
     @abstractmethod
     def add_message(self, queue_name: str, msg: str, delay: int):
