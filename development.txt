@@ -3,5 +3,3 @@ Django==4.1.7
 mock==5.0.1
 moto==4.1.6
 requests==2.28.2
-
-git+ssh://git@github.com/cuda-networks/common-utils.git@v1.10
