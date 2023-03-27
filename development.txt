@@ -1,5 +1,7 @@
-boto3==1.26.97
+boto3==1.26.99
 Django==4.1.7
 mock==5.0.1
-moto==4.1.5
+moto==4.1.6
 requests==2.28.2
+
+git+ssh://git@github.com/cuda-networks/common-utils.git@v1.10
