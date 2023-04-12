@@ -34,8 +34,6 @@ TEMPLATES = [
     },
 ]
 
-ROOT_URLCONF = 'eb_sqs.urls'
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,

@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 from unittest import TestCase
 
@@ -8,7 +6,6 @@ from eb_sqs.worker.worker_task import WorkerTask
 
 class TestObject(object):
     def __init__(self):
-        # type: () -> None
         super(TestObject, self).__init__()
         self.message = 'Test'
 

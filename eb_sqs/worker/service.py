@@ -1,11 +1,12 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import signal
 from datetime import timedelta
 from time import sleep
+from typing import Any
 
 import boto3
+from boto3.resources.base import ServiceResource
+
 from botocore.config import Config
 from botocore.exceptions import ClientError
 import django.dispatch
@@ -19,9 +20,9 @@ from eb_sqs.worker.worker_factory import WorkerFactory
 
 logger = logging.getLogger(__name__)
 
-MESSAGES_RECEIVED = django.dispatch.Signal(providing_args=['messages'])
-MESSAGES_PROCESSED = django.dispatch.Signal(providing_args=['messages'])
-MESSAGES_DELETED = django.dispatch.Signal(providing_args=['messages'])
+MESSAGES_RECEIVED = django.dispatch.Signal()
+MESSAGES_PROCESSED = django.dispatch.Signal()
+MESSAGES_DELETED = django.dispatch.Signal()
 
 
 class WorkerService(object):
@@ -29,12 +30,10 @@ class WorkerService(object):
     _RECEIVE_COUNT_ATTRIBUTE = 'ApproximateReceiveCount'
 
     def __init__(self):
-        # type: () -> None
         self._exit_gracefully = False
         self._last_healthcheck_time = None
 
-    def process_queues(self, queue_names):
-        # type: (list) -> None
+    def process_queues(self, queue_names: list):
         signal.signal(signal.SIGTERM, self._exit_called)
 
         self.write_healthcheck_file()
@@ -83,8 +82,7 @@ class WorkerService(object):
             else:
                 self.process_messages(queues, worker, static_queues)
 
-    def process_messages(self, queues, worker, static_queues):
-        # type: (list, Worker, list) -> None
+    def process_messages(self, queues: list, worker: Worker, static_queues: list):
 
         for queue in queues:
             if self._exit_gracefully:
@@ -100,8 +98,8 @@ class WorkerService(object):
                 for msg in messages:
                     self._execute_user_code(lambda: self._process_message(msg, worker))
                     msg_entries.append({
-                            'Id': msg.message_id,
-                            'ReceiptHandle': msg.receipt_handle
+                        'Id': msg.message_id,
+                        'ReceiptHandle': msg.receipt_handle
                     })
 
                 self._send_signal(MESSAGES_PROCESSED, messages=messages)
@@ -112,18 +110,19 @@ class WorkerService(object):
             except ClientError as exc:
                 error_code = exc.response.get('Error', {}).get('Code', None)
                 if error_code == 'AWS.SimpleQueueService.NonExistentQueue' and queue not in static_queues:
-                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc), exc_info=True)
+                    logger.debug('[django-eb-sqs] Queue was already deleted {}: {}'.format(queue.url, exc),
+                                 exc_info=True)
                 else:
                     logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
             except Exception as exc:
                 logger.warning('[django-eb-sqs] Error polling queue {}: {}'.format(queue.url, exc), exc_info=True)
 
-            if timezone.now() - timedelta(seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self._last_healthcheck_time:
+            if timezone.now() - timedelta(
+                    seconds=settings.MIN_HEALTHCHECK_WRITE_PERIOD_S) > self._last_healthcheck_time:
                 self.write_healthcheck_file()
                 self._last_healthcheck_time = timezone.now()
 
-    def delete_messages(self, queue, msg_entries):
-        # type: (Queue, list) -> None
+    def delete_messages(self, queue, msg_entries: list):
         if len(msg_entries) > 0:
             response = queue.delete_messages(Entries=msg_entries)
 
@@ -133,21 +132,18 @@ class WorkerService(object):
             if num_failed > 0:
                 logger.warning('[django-eb-sqs] Failed deleting {} messages: {}'.format(num_failed, failed))
 
-    def poll_messages(self, queue):
-        # type: (Queue) -> list
+    def poll_messages(self, queue) -> list:
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
             AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE]
         )
 
-    def _send_signal(self, dispatch_signal, messages):
-        # type: (django.dispatch.Signal, list) -> None
+    def _send_signal(self, dispatch_signal: django.dispatch.Signal, messages: list):
         if dispatch_signal.has_listeners(sender=self.__class__):
             self._execute_user_code(lambda: dispatch_signal.send(sender=self.__class__, messages=messages))
 
-    def _process_message(self, msg, worker):
-        # type: (Message, Worker) -> None
+    def _process_message(self, msg, worker: Worker):
         logger.debug('[django-eb-sqs] Read message {}'.format(msg.message_id))
         try:
             receive_count = int(msg.attributes[self._RECEIVE_COUNT_ATTRIBUTE])
@@ -164,20 +160,17 @@ class WorkerService(object):
             logger.warning('[django-eb-sqs] Handling message {} got error: {}'.format(msg.message_id, repr(exc)))
 
     @staticmethod
-    def _execute_user_code(function):
-        # type: (Any) -> None
+    def _execute_user_code(function: Any):
         try:
             with django_db_management():
                 function()
         except Exception as exc:
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=True)
 
-    def get_queues_by_names(self, sqs, queue_names):
-        # type: (ServiceResource, list) -> list
+    def get_queues_by_names(self, sqs: ServiceResource, queue_names: list) -> list:
         return [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
 
-    def get_queues_by_prefixes(self, sqs, prefixes):
-        # type: (ServiceResource, list) -> list
+    def get_queues_by_prefixes(self, sqs: ServiceResource, prefixes: list) -> list:
         queues = []
 
         for prefix in prefixes:
@@ -186,7 +179,6 @@ class WorkerService(object):
         return queues
 
     def write_healthcheck_file(self):
-        # type: () -> None
         with open(settings.HEALTHCHECK_FILE_NAME, 'w') as file:
             file.write(timezone.now().isoformat())
 

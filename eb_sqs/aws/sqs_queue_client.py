@@ -1,4 +1,4 @@
-from __future__ import absolute_import, unicode_literals
+from typing import Any
 
 import boto3
 from botocore.config import Config
@@ -10,15 +10,13 @@ from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException, 
 
 class SqsQueueClient(QueueClient):
     def __init__(self):
-        # type: () -> None
         self.sqs = boto3.resource('sqs',
                                   region_name=settings.AWS_REGION,
                                   config=Config(retries={'max_attempts': settings.AWS_MAX_RETRIES})
                                   )
         self.queue_cache = {}
 
-    def _get_queue(self, queue_name, use_cache=True):
-        # type: (unicode, bool) -> Any
+    def _get_queue(self, queue_name: str, use_cache: bool = True) -> Any:
         full_queue_name = '{}{}'.format(settings.QUEUE_PREFIX, queue_name)
 
         queue = self._get_sqs_queue(full_queue_name, use_cache)
@@ -27,8 +25,7 @@ class SqsQueueClient(QueueClient):
 
         return queue
 
-    def _get_sqs_queue(self, queue_name, use_cache):
-        # type: (unicode, bool) -> Any
+    def _get_sqs_queue(self, queue_name: str, use_cache: bool) -> Any:
         if use_cache and self.queue_cache.get(queue_name):
             return self.queue_cache[queue_name]
 
@@ -43,8 +40,7 @@ class SqsQueueClient(QueueClient):
             else:
                 raise ex
 
-    def _add_sqs_queue(self, queue_name):
-        # type: (unicode) -> Any
+    def _add_sqs_queue(self, queue_name: str) -> Any:
         if settings.AUTO_ADD_QUEUE:
             queue = self.sqs.create_queue(
                 QueueName=queue_name,
@@ -58,8 +54,7 @@ class SqsQueueClient(QueueClient):
         else:
             raise QueueDoesNotExistException(queue_name)
 
-    def add_message(self, queue_name, msg, delay):
-        # type: (unicode, unicode, int) -> None
+    def add_message(self, queue_name: str, msg: str, delay: int):
         try:
             queue = self._get_queue(queue_name)
             try:
