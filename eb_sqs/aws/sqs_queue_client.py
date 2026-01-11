@@ -1,6 +1,5 @@
-from typing import Any
 import re
-from urllib.parse import urlparse
+from typing import Any
 
 import boto3
 from botocore.config import Config
