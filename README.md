@@ -119,11 +119,102 @@ Notice the following:
 In case you want your method to retry certain cases, you need to raise `RetryableTaskException`.
 You can provide on optional `delay` time for the retry, set `count_retries=False` in case you don't want to limit retries, or use `max_retries_func` to specify a function which will be invoked when the defined maximum number of retries is exhausted.   
 
+#### Cross-Account SQS Support
+
+Django-eb-sqs supports accessing SQS queues from different AWS accounts. This is useful in multi-account architectures where you need to send messages to or process messages from queues in other AWS accounts.
+
+##### Configuration
+
+You can configure cross-account queues in two ways:
+
+**Method 1: Cross-Account Queue Configuration**
+```python
+EB_SQS_CROSS_ACCOUNT_QUEUES = {
+    'external-queue': {
+        'account_id': '123456789012',
+        'region': 'us-west-2',  # optional, defaults to EB_AWS_REGION
+        'queue_name': 'actual-queue-name'  # optional, defaults to the key name
+    },
+    'prod-notifications': {
+        'account_id': '987654321098',
+        'queue_name': 'notification-queue'
+    }
+}
+```
+
+**Method 2: Direct Queue URLs**
+```python
+EB_SQS_QUEUE_URLS = {
+    'external-queue': 'https://sqs.us-west-2.amazonaws.com/123456789012/actual-queue-name',
+    'prod-notifications': 'https://sqs.us-east-1.amazonaws.com/987654321098/notification-queue'
+}
+```
+
+##### Usage
+
+Once configured, you can use cross-account queues just like regular queues:
+
+```python
+from eb_sqs.decorators import task
+
+@task(queue_name='external-queue')
+def process_external_data(data):
+    print(f"Processing data from external account: {data}")
+
+# Send a task to the external queue
+process_external_data.delay(data={'key': 'value'})
+```
+
+For processing messages from cross-account queues:
+
+```bash
+python manage.py process_queue --queues external-queue,prod-notifications
+```
+
+You can also use full queue URLs directly:
+
+```bash
+python manage.py process_queue --queues https://sqs.us-west-2.amazonaws.com/123456789012/actual-queue-name
+```
+
+##### IAM Permissions
+
+For cross-account access to work, ensure your IAM role/user has the necessary permissions:
+
+1. **Cross-account role assumption** (recommended): Set up cross-account IAM roles
+2. **Resource-based policies**: Configure SQS queue policies to allow access from your account
+3. **Direct permissions**: Grant SQS permissions for the specific cross-account queues
+
+Example SQS queue policy for cross-account access:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "CrossAccountAccess",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::YOUR-ACCOUNT-ID:root"
+      },
+      "Action": [
+        "sqs:SendMessage",
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": "arn:aws:sqs:us-west-2:123456789012:actual-queue-name"
+    }
+  ]
+}
+```
+
 #### Settings
 
 The following settings can be used to fine tune django-eb-sqs. Copy them into your Django `settings.py` file.
 
 - EB_AWS_REGION (`us-east-1`): The AWS region to use when working with SQS.
+- EB_SQS_CROSS_ACCOUNT_QUEUES (`{}`): Dictionary mapping queue names to cross-account configurations.
+- EB_SQS_QUEUE_URLS (`{}`): Dictionary mapping queue names to full SQS queue URLs.
 - EB_SQS_MAX_NUMBER_OF_MESSAGES (`10`): The maximum number of messages to read in a single call from SQS (<= 10).
 - EB_SQS_WAIT_TIME_S (`2`): The time to wait (seconds) when receiving messages from SQS.
 - NO_QUEUES_WAIT_TIME_S (`5`): The time a workers waits if there are no SQS queues available to process.

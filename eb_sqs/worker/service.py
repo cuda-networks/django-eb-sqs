@@ -168,7 +168,34 @@ class WorkerService(object):
             logger.error('[django-eb-sqs] Unhandled error: {}'.format(exc), exc_info=True)
 
     def get_queues_by_names(self, sqs: ServiceResource, queue_names: list) -> list:
-        return [sqs.get_queue_by_name(QueueName=queue_name) for queue_name in queue_names]
+        queues = []
+        for queue_name in queue_names:
+            # Check if it's a full URL
+            if self._is_queue_url(queue_name):
+                queue = sqs.Queue(queue_name)
+            # Check if there's a configured URL for this queue
+            elif queue_name in settings.QUEUE_URLS:
+                queue = sqs.Queue(settings.QUEUE_URLS[queue_name])
+            # Check if there's a cross-account configuration
+            elif queue_name in settings.CROSS_ACCOUNT_QUEUES:
+                cross_account_config = settings.CROSS_ACCOUNT_QUEUES[queue_name]
+                account_id = cross_account_config.get('account_id')
+                region = cross_account_config.get('region', settings.AWS_REGION)
+                actual_queue_name = cross_account_config.get('queue_name', queue_name)
+                queue_url = f"https://sqs.{region}.amazonaws.com/{account_id}/{actual_queue_name}"
+                queue = sqs.Queue(queue_url)
+            else:
+                # Use standard queue name for same-account queues
+                queue = sqs.get_queue_by_name(QueueName=queue_name)
+            
+            queues.append(queue)
+        return queues
+
+    def _is_queue_url(self, queue_identifier: str) -> bool:
+        """Check if the queue identifier is a full SQS URL"""
+        import re
+        sqs_url_pattern = r'^https://sqs\.[a-zA-Z0-9-]+\.amazonaws\.com/\d+/.+'
+        return bool(re.match(sqs_url_pattern, queue_identifier))
 
     def get_queues_by_prefixes(self, sqs: ServiceResource, prefixes: list) -> list:
         queues = []

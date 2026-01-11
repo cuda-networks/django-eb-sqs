@@ -2,6 +2,10 @@ from django.conf import settings
 
 AWS_REGION = getattr(settings, 'EB_AWS_REGION', 'us-east-1')  # type: str
 
+# Cross-account SQS support
+CROSS_ACCOUNT_QUEUES = getattr(settings, 'EB_SQS_CROSS_ACCOUNT_QUEUES', {})  # type: dict
+QUEUE_URLS = getattr(settings, 'EB_SQS_QUEUE_URLS', {})  # type: dict
+
 MAX_NUMBER_OF_MESSAGES = getattr(settings, 'EB_SQS_MAX_NUMBER_OF_MESSAGES', 10)  # type: int
 WAIT_TIME_S = getattr(settings, 'EB_SQS_WAIT_TIME_S', 2)  # type: int
 NO_QUEUES_WAIT_TIME_S = getattr(settings, 'NO_QUEUES_WAIT_TIME_S', 5)  # type: int
