@@ -1,4 +1,5 @@
 import logging
+import re
 import signal
 from datetime import timedelta
 from time import sleep
@@ -193,7 +194,6 @@ class WorkerService(object):
 
     def _is_queue_url(self, queue_identifier: str) -> bool:
         """Check if the queue identifier is a full SQS URL"""
-        import re
         sqs_url_pattern = r'^https://sqs\.[a-zA-Z0-9-]+\.amazonaws\.com/\d+/.+'
         return bool(re.match(sqs_url_pattern, queue_identifier))
 
