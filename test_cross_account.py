@@ -50,10 +50,13 @@ def test_cross_account_functionality():
     # Test 1: URL detection
     print("\n1. Testing URL detection...")
     
-    # Valid SQS URLs
+    # Valid SQS URLs - testing various AWS region formats
     valid_urls = [
         'https://sqs.us-east-1.amazonaws.com/123456789012/test-queue',
-        'https://sqs.eu-west-1.amazonaws.com/987654321098/another-queue'
+        'https://sqs.eu-west-1.amazonaws.com/987654321098/another-queue',
+        'https://sqs.ap-southeast-1.amazonaws.com/111222333444/complex-region-queue',
+        'https://sqs.ca-central-1.amazonaws.com/555666777888/canada-queue',
+        'https://sqs.us-gov-east-1.amazonaws.com/999000111222/gov-cloud-queue'
     ]
     
     for url in valid_urls:
