@@ -1,5 +1,5 @@
-import re
 from typing import Any
+import re
 
 import boto3
 from botocore.config import Config
@@ -19,8 +19,7 @@ class SqsQueueClient(QueueClient):
 
     def _is_queue_url(self, queue_identifier: str) -> bool:
         """Check if the queue identifier is a full SQS URL"""
-        sqs_url_pattern = r'^https://sqs\.[a-zA-Z0-9-]+\.amazonaws\.com/\d+/.+'
-        return bool(re.match(sqs_url_pattern, queue_identifier))
+        return bool(re.match(settings.SQS_URL_PATTERN, queue_identifier))
 
     def _get_queue_url(self, queue_name: str) -> str:
         """Get queue URL from configuration or construct standard name"""

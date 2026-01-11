@@ -16,19 +16,20 @@ if not settings.configured:
             'eb_sqs',
         ],
         # Cross-account SQS settings examples
+        # NOTE: These are example account IDs for testing purposes only - they do not correspond to real AWS accounts
         EB_SQS_CROSS_ACCOUNT_QUEUES={
             'external-queue': {
-                'account_id': '123456789012',
+                'account_id': '123456789012',  # Example account ID - not a real account
                 'region': 'us-west-2',
                 'queue_name': 'actual-queue-name'
             },
             'prod-notifications': {
-                'account_id': '987654321098',
+                'account_id': '987654321098',  # Example account ID - not a real account
                 'queue_name': 'notification-queue'
             }
         },
         EB_SQS_QUEUE_URLS={
-            'direct-url-queue': 'https://sqs.us-west-2.amazonaws.com/123456789012/direct-queue'
+            'direct-url-queue': 'https://sqs.us-west-2.amazonaws.com/123456789012/direct-queue'  # Example URL - not a real queue
         },
         EB_AWS_REGION='us-east-1'
     )
