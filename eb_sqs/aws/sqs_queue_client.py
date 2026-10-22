@@ -4,7 +4,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import ClientError
 
-from eb_sqs import settings
+from eb_sqs import settings, tracing
 from eb_sqs.worker.queue_client import QueueClient, QueueDoesNotExistException, QueueClientException
 
 
@@ -57,20 +57,29 @@ class SqsQueueClient(QueueClient):
     def add_message(self, queue_name: str, msg: str, delay: int):
         try:
             queue = self._get_queue(queue_name)
-            try:
-                queue.send_message(
-                    MessageBody=msg,
-                    DelaySeconds=delay
-                )
-            except ClientError as ex:
-                if ex.response.get('Error', {}).get('Code', None) == 'AWS.SimpleQueueService.NonExistentQueue':
-                    queue = self._get_queue(queue_name, use_cache=False)
+            with tracing.producer_span(queue_name):
+                # Empty dict when OTel is absent: the call is then identical to the pre-tracing one.
+                extra = {}
+                attributes = tracing.build_message_attributes()
+                if attributes:
+                    extra['MessageAttributes'] = attributes
+
+                try:
                     queue.send_message(
                         MessageBody=msg,
-                        DelaySeconds=delay
+                        DelaySeconds=delay,
+                        **extra
                     )
-                else:
-                    raise ex
+                except ClientError as ex:
+                    if ex.response.get('Error', {}).get('Code', None) == 'AWS.SimpleQueueService.NonExistentQueue':
+                        queue = self._get_queue(queue_name, use_cache=False)
+                        queue.send_message(
+                            MessageBody=msg,
+                            DelaySeconds=delay,
+                            **extra
+                        )
+                    else:
+                        raise ex
         except QueueDoesNotExistException:
             raise
         except Exception as ex:

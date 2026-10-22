@@ -12,7 +12,7 @@ from botocore.exceptions import ClientError
 import django.dispatch
 from django.utils import timezone
 
-from eb_sqs import settings
+from eb_sqs import settings, tracing
 from eb_sqs.worker.commons import django_db_management
 from eb_sqs.worker.worker import Worker
 from eb_sqs.worker.worker_exceptions import ExecutionFailedException
@@ -136,7 +136,9 @@ class WorkerService(object):
         return queue.receive_messages(
             MaxNumberOfMessages=settings.MAX_NUMBER_OF_MESSAGES,
             WaitTimeSeconds=settings.WAIT_TIME_S,
-            AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE]
+            AttributeNames=[self._RECEIVE_COUNT_ATTRIBUTE],
+            # Without this SQS does not return custom attributes and trace extraction silently yields nothing.
+            MessageAttributeNames=list(tracing.PROPAGATION_KEYS)
         )
 
     def _send_signal(self, dispatch_signal: django.dispatch.Signal, messages: list):
@@ -153,7 +155,8 @@ class WorkerService(object):
                     receive_count, msg.body
                 ))
 
-            worker.execute(msg.body)
+            with tracing.consumer_span(msg):
+                worker.execute(msg.body)
 
             logger.debug('[django-eb-sqs] Processed message {}'.format(msg.message_id))
         except ExecutionFailedException as exc:

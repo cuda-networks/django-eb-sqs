@@ -21,6 +21,30 @@ INSTALLED_APPS = (
 
 ### Usage
 
+#### OpenTelemetry trace propagation (optional)
+
+The library can propagate the W3C trace context (`traceparent`, and `tracestate` when present) over SQS `MessageAttributes`, so producer and consumer spans are linked. Install the extra:
+
+```
+pip install "django-eb-sqs[otel]"
+```
+
+Without `opentelemetry-api`, or without a configured tracer provider, behaviour is unchanged and no `MessageAttributes` are sent.
+
+**Receive side:** `WorkerService` already calls `receive_messages` with `MessageAttributeNames=list(tracing.PROPAGATION_KEYS)`. A custom consumer that calls `receive_messages` directly must pass the same list, otherwise SQS drops the attributes and producer and consumer spans are not linked.
+
+```python
+from eb_sqs import tracing
+
+messages = queue.receive_messages(
+    MessageAttributeNames=list(tracing.PROPAGATION_KEYS),
+)
+```
+
+**SQS limits:**
+- A message can have at most 10 `MessageAttributes`. Propagation uses a small fixed set: `traceparent` and, optionally, `tracestate`.
+- A message can be at most 256 KB in total, attributes included.
+
 #### Creating Tasks
 
 Adding a task to a queue is simple.
