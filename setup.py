@@ -20,6 +20,9 @@ setup(
         'Django>=1.10.6',
         'requests>=2.10.0',
     ],
+    # Optional OTel traceparent propagation over SQS MessageAttributes;
+    # without the extra the library sends no MessageAttributes.
+    extras_require={'otel': ['opentelemetry-api>=1.20']},
     classifiers=[
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 3.9',
