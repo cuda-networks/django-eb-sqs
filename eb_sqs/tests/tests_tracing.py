@@ -10,13 +10,17 @@ from eb_sqs import settings, tracing
 from eb_sqs.aws.sqs_queue_client import SqsQueueClient
 from eb_sqs.worker.service import WorkerService
 
-if tracing.OTEL_AVAILABLE:
+try:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import SimpleSpanProcessor
     from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
+    SDK_AVAILABLE = True
+except ImportError:
+    SDK_AVAILABLE = False
 
-@skipUnless(tracing.OTEL_AVAILABLE, 'opentelemetry is not installed')
+
+@skipUnless(SDK_AVAILABLE, 'opentelemetry-sdk is not installed')
 class TracingPropagationTest(TestCase):
     def setUp(self):
         settings.QUEUE_PREFIX = 'eb-sqs-'
